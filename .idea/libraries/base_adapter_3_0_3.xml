@@ -1,0 +1,12 @@
+<component name="libraryTable">
+  <library name="base-adapter-3.0.3">
+    <CLASSES>
+      <root url="file://$USER_HOME$/.android/build-cache/e193507803d58688484a5376616cfa920ee8230a/output/res" />
+      <root url="jar://$USER_HOME$/.android/build-cache/e193507803d58688484a5376616cfa920ee8230a/output/jars/classes.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/com.zhy/base-adapter/3.0.3/ba19230613aebed0ae95442570e1785151fdf99/base-adapter-3.0.3-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg_color"
+    android:gravity="center"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="60dp"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <EditText
+            android:id="@+id/ed_name"
+            android:layout_width="match_parent"
+            android:layout_height="46dp"
+            android:gravity="left|center_vertical"
+            android:hint="用户名"
+            android:paddingLeft="5dp"
+            android:text="1"
+            android:textSize="16sp" />
+
+        <EditText
+            android:id="@+id/ed_password"
+            android:layout_width="match_parent"
+            android:layout_height="46dp"
+            android:gravity="left|center_vertical"
+            android:hint="密码"
+            android:text="1"
+            android:inputType="textPassword"
+            android:paddingLeft="5dp"
+            android:textSize="16sp" />
+
+        <Button
+            android:id="@+id/btn_login"
+            android:layout_width="match_parent"
+            android:layout_height="46dp"
+            android:layout_marginTop="25dp"
+            android:clickable="true"
+            android:text="登  录"
+            android:textColor="@color/white"
+            android:textSize="20sp" />
+
+    </LinearLayout>
+
+
+    <Button
+        android:id="@+id/btn_register"
+        android:layout_width="100dp"
+        android:layout_height="46dp"
+        android:layout_gravity="right"
+        android:layout_marginRight="15dp"
+        android:layout_marginTop="25dp"
+        android:text="注册"
+        android:textColor="@color/white"
+        android:textSize="20sp" />
+
+
+</LinearLayout>
