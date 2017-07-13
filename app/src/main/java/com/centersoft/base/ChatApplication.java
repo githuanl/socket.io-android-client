@@ -26,10 +26,10 @@ public class ChatApplication extends Application {
     public static Socket getSocket() {
         if (socket == null) {
             IO.Options opts = new IO.Options();
-            opts.forceNew = true;
+            opts.forceNew = false;
             opts.reconnection = true;
-            opts.reconnectionDelay = 1000;
-            opts.reconnectionDelayMax = 1000;
+            opts.reconnectionDelay = 1000;      //延迟
+            opts.reconnectionDelayMax = 10000;   //延迟
             opts.query = "auth_token=" + Constant.Auth_Token;
             try {
                 socket = IO.socket(Constant.BaseUrl, opts);

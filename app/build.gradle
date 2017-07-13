@@ -38,6 +38,9 @@ dependencies {
     compile 'com.alibaba:fastjson:1.1.57.android'
     compile 'com.zhy:okhttputils:2.6.2'
     compile 'com.zhy:base-adapter:3.0.3'
+
+    compile 'com.github.bumptech.glide:glide:3.7.0'
+    compile 'com.lzy.widget:imagepicker:0.5.5'
 //    compile 'com.koushikdutta.async:androidasync:2.+'
 
 }

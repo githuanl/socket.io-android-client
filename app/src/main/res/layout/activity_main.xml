@@ -6,26 +6,62 @@
 
     <include layout="@layout/toolbar" />
 
-    <ListView
-        android:id="@+id/lv_list"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:divider="@null" />
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <ListView
+            android:id="@+id/lv_list"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:divider="@null"
+            android:stackFromBottom="true"
+            android:transcriptMode="alwaysScroll" />
+
+        <View
+            android:layout_width="1dp"
+            android:layout_height="match_parent"
+            android:background="@color/bg_color" />
+
+        <ListView
+            android:id="@+id/lv_list_right"
+            android:layout_width="100dp"
+            android:layout_height="match_parent"
+            android:dividerHeight="0.6dp" />
+
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/tv_touser"
+        android:layout_width="match_parent"
+        android:layout_height="20dp"
+        android:gravity="center_vertical"
+        android:paddingLeft="16dp"
+        android:text="你正在给所有人聊天："
+        android:textColor="@android:color/holo_red_dark"
+        android:textSize="16dp" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/bg_color" />
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="bottom"
         android:gravity="center_vertical"
         android:orientation="horizontal">
+
 
         <EditText
             android:id="@+id/message_input"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:imeActionId="@+id/send"
             android:imeOptions="actionSend"
             android:inputType="text"
             android:maxLines="1"
@@ -36,6 +72,13 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:src="@android:drawable/ic_menu_send" />
+
+        <Button
+            android:id="@+id/btn_send_pic"
+            android:layout_width="60dp"
+            android:layout_height="match_parent"
+            android:text="发送图片"
+            android:textSize="12sp" />
 
     </LinearLayout>
 

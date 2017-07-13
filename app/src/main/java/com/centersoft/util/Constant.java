@@ -17,7 +17,11 @@ public class Constant {
     public static String Auth_Token = "";
 
     //注册用户
-    public static final String Register_Url = "register";
+    public static final String Register_Url =    "register";
+
+    public static final String Get_OnlineUsers = "onLineUsers";
+
+    public static final String Upload_Files = "uploadFiles";
 
 }
 

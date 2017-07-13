@@ -79,7 +79,13 @@
 
         <activity android:name=".RegisterActy" />
 
-        <activity android:name=".MainActy" />
+        <activity
+            android:name=".MainActy"
+            android:windowSoftInputMode="adjustResize|stateHidden" />
+
+        <activity
+            android:name="com.lzy.imagepicker.ui.ImagePreviewDelActivity"
+            android:theme="@style/ImagePickerThemeFullScreen"/>
 
     </application>
 

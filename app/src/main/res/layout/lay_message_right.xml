@@ -35,6 +35,13 @@
                 android:layout_height="wrap_content"
                 android:background="@drawable/ease_chatto_bg">
 
+                <ImageView
+                    android:id="@+id/iv_image"
+                    android:layout_width="150dp"
+                    android:layout_height="150dp"
+                    android:layout_alignParentTop="true"
+                    android:visibility="gone" />
+
                 <TextView
                     android:id="@+id/tv_text"
                     android:layout_width="wrap_content"
@@ -43,7 +50,7 @@
                     android:autoLink="web"
                     android:gravity="center|left"
                     android:lineSpacingExtra="2dp"
-                    android:maxWidth="225.0dip"
+                    android:maxWidth="160dp"
                     android:minHeight="30dp"
                     android:paddingLeft="5dp"
                     android:paddingRight="6dp"

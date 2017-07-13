@@ -25,7 +25,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginLeft="10dp"
-            android:maxWidth="220dp"
+            android:maxWidth="160dp"
             android:orientation="vertical">
 
             <TextView
@@ -39,8 +39,15 @@
 
             <RelativeLayout
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@drawable/ease_chatfrom_bg">
+                android:background="@drawable/ease_chatfrom_bg"
+                android:layout_height="wrap_content">
+
+                <ImageView
+                    android:id="@+id/iv_image"
+                    android:layout_width="150dp"
+                    android:layout_height="150dp"
+                    android:layout_alignParentTop="true"
+                    android:visibility="gone" />
 
                 <TextView
                     android:id="@+id/tv_text"

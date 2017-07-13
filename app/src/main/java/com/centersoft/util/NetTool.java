@@ -2,12 +2,16 @@ package com.centersoft.util;
 
 import android.content.Context;
 
+import com.alibaba.fastjson.JSON;
 import com.centersoft.ICallBack.IDataCallBack;
 import com.centersoft.enums.VFCode;
 import com.zhy.http.okhttp.OkHttpUtils;
+import com.zhy.http.okhttp.builder.PostFormBuilder;
 import com.zhy.http.okhttp.callback.Callback;
 
+import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 
 import okhttp3.Call;
@@ -80,10 +84,19 @@ public class NetTool {
                         .execute(callBackManage(type, context, urlString, parameters, callBack));
                 break;
             case Post:
-                OkHttpUtils.post()
+                PostFormBuilder pb = OkHttpUtils.post()
                         .tag(context)
-                        .url(url)
-                        .params(parameters)
+                        .url(url);
+                if (parameters.get("file_submit") != null) {        //上传文件
+                    Map<String, String> fileMap = JSON.parseObject(parameters.get("file_submit"), HashMap.class);
+                    for (String key : fileMap.keySet()) {
+                        String[] name = fileMap.get(key).split("/");
+                        File file = new File(fileMap.get(key));
+                        pb.addFile(key, name[name.length - 1], file);
+                    }
+                    parameters.remove("file_submit");
+                }
+                pb.params(parameters)
                         .build()
                         .execute(callBackManage(type, context, urlString, parameters, callBack));
                 break;
