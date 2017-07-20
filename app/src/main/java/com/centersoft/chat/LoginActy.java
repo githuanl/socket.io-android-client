@@ -1,11 +1,16 @@
 package com.centersoft.chat;
 
+import android.app.ActivityOptions;
+import android.content.Intent;
+import android.os.Build;
+import android.support.design.widget.FloatingActionButton;
 import android.text.TextUtils;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 
 import com.alibaba.fastjson.JSONObject;
+import com.blankj.utilcode.util.SPUtils;
 import com.centersoft.ICallBack.IDataCallBack;
 import com.centersoft.base.BaseActivity;
 import com.centersoft.enums.VFCode;
@@ -29,13 +34,26 @@ public class LoginActy extends BaseActivity {
     @BindView(R.id.btn_login)
     Button btnLogin;
     @BindView(R.id.btn_register)
-    Button btnRegister;
+    FloatingActionButton btnRegister;
 
     @Override
     public int initResource() {
         return R.layout.acty_login;
     }
 
+    @Override
+    protected void initData() {
+        super.initData();
+
+        String loginname = SPUtils.getInstance().getString("loginName");
+        String password = SPUtils.getInstance().getString("password");
+
+        if (!TextUtils.isEmpty(loginname) && !TextUtils.isEmpty(password)) {
+            edName.setText(loginname);
+            edPassword.setText(password);
+        }
+
+    }
 
     // 登录 逻辑
     private void login() {
@@ -54,7 +72,7 @@ public class LoginActy extends BaseActivity {
         baseReqMap.put("userName", name);
         baseReqMap.put("password", password);
 
-        NetTool.requestWithGet(context, Constant.Login_Url, baseReqMap, new IDataCallBack<String>() {
+        NetTool.requestWithPost(context, Constant.Login_Url, baseReqMap, new IDataCallBack<String>() {
 
             @Override
             public void closeDialog() {
@@ -71,7 +89,9 @@ public class LoginActy extends BaseActivity {
                 } else {
                     Constant.Login_Name = baseReqMap.get("userName");
                     Constant.Auth_Token = jobj.getJSONObject("data").getString("auth_token");
-                    openActivity(MainActy.class);
+                    SPUtils.getInstance().put("loginName", baseReqMap.get("userName"));
+                    SPUtils.getInstance().put("password", baseReqMap.get("password"));
+                    openActivity(HomeActy.class);
                     AppManager.getInstance().killActivity(LoginActy.this);
                 }
             }
@@ -81,17 +101,27 @@ public class LoginActy extends BaseActivity {
 
             }
         });
-
     }
 
-    @OnClick({R.id.btn_login,R.id.btn_register})
+    @OnClick({R.id.btn_login, R.id.btn_register})
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.btn_login:
                 login();
                 break;
             case R.id.btn_register:
-                openActivity(RegisterActy.class);
+
+                getWindow().setExitTransition(null);
+                getWindow().setEnterTransition(null);
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    ActivityOptions options =
+                            ActivityOptions.makeSceneTransitionAnimation(this, btnRegister, btnRegister.getTransitionName());
+                    startActivity(new Intent(this, RegisterActy.class), options.toBundle());
+                } else {
+                    startActivity(new Intent(this, RegisterActy.class));
+                }
+
                 break;
         }
     }

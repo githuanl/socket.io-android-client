@@ -2,7 +2,6 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/bg_color"
     android:gravity="center"
     android:orientation="vertical">
 
@@ -11,6 +10,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginRight="5dp"
+        android:background="@color/white"
         android:gravity="right"
         android:orientation="horizontal">
 
@@ -26,9 +26,7 @@
                 android:layout_width="100dp"
                 android:layout_height="20dp"
                 android:gravity="right"
-                android:text="张三丰"
                 android:textSize="12sp" />
-
 
             <RelativeLayout
                 android:layout_width="wrap_content"

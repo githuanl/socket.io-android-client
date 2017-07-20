@@ -1,5 +1,7 @@
 package com.centersoft.chat;
 
+import android.support.design.widget.FloatingActionButton;
+import android.support.v7.widget.CardView;
 import android.text.TextUtils;
 import android.view.View;
 import android.widget.Button;
@@ -26,8 +28,17 @@ public class RegisterActy extends BaseActivity {
     @BindView(R.id.ed_password)
     EditText edPassword;
 
+    @BindView(R.id.et_repeatpassword)
+    EditText etRepeatPassword;
+
     @BindView(R.id.btn_register)
     Button btnRegister;
+
+    @BindView(R.id.fab)
+    FloatingActionButton fab;
+
+    @BindView(R.id.cv_add)
+    CardView cvAdd;
 
     @Override
     public int initResource() {
@@ -39,6 +50,7 @@ public class RegisterActy extends BaseActivity {
     private void register() {
         String name = edName.getText().toString();
         String password = edPassword.getText().toString();
+        String repeatPassword = etRepeatPassword.getText().toString();
         if (TextUtils.isEmpty(name)) {
             Tools.showToast("用户名不能为空", context);
             return;
@@ -47,12 +59,20 @@ public class RegisterActy extends BaseActivity {
             Tools.showToast("密码不能为空", context);
             return;
         }
+        if (TextUtils.isEmpty(repeatPassword)) {
+            Tools.showToast("重复密码不能为空", context);
+            return;
+        }
+        if (!repeatPassword.equals(password)) {
+            Tools.showToast("两次密码输入不同", context);
+            return;
+        }
 
         baseDialog.show();
         baseReqMap.put("userName", name);
         baseReqMap.put("password", password);
 
-        NetTool.requestWithGet(context, Constant.Register_Url, baseReqMap, new IDataCallBack<String>() {
+        NetTool.requestWithPost(context, Constant.Register_Url, baseReqMap, new IDataCallBack<String>() {
 
             @Override
             public void closeDialog() {
@@ -79,11 +99,14 @@ public class RegisterActy extends BaseActivity {
 
     }
 
-    @OnClick({R.id.btn_register})
+    @OnClick({R.id.btn_register, R.id.fab})
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.btn_register:
                 register();
+                break;
+            case R.id.fab:
+                goBack();
                 break;
         }
     }

@@ -80,12 +80,18 @@
         <activity android:name=".RegisterActy" />
 
         <activity
-            android:name=".MainActy"
+            android:name=".HomeActy"
             android:windowSoftInputMode="adjustResize|stateHidden" />
 
+        <activity android:name=".MainActy" />
+
+        <activity android:name=".ChatActy" />
+
+
+        <!--  图片选择 -->
         <activity
             android:name="com.lzy.imagepicker.ui.ImagePreviewDelActivity"
-            android:theme="@style/ImagePickerThemeFullScreen"/>
+            android:theme="@style/ImagePickerThemeFullScreen" />
 
     </application>
 

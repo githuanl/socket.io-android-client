@@ -24,6 +24,7 @@ import com.centersoft.entity.VFMessage;
 import com.centersoft.enums.Body_type;
 import com.centersoft.enums.Chat_type;
 import com.centersoft.enums.VFCode;
+import com.centersoft.util.AppManager;
 import com.centersoft.util.Constant;
 import com.centersoft.util.GlideImageLoader;
 import com.centersoft.util.MyLog;
@@ -81,7 +82,7 @@ public class MainActy extends BaseActivity {
 
     @Override
     public int initResource() {
-        return R.layout.activity_main;
+        return R.layout.acty_home;
     }
 
     @Override
@@ -128,7 +129,7 @@ public class MainActy extends BaseActivity {
         onLineAdapter = new CommonAdapter<String>(this, R.layout.lay_online_user, onLineList) {
             @Override
             protected void convert(ViewHolder viewHolder, String item, int position) {
-                viewHolder.setText(R.id.tv_user, item);
+                viewHolder.setText(R.id.tv_name, item);
             }
         };
         lv_list_right.setAdapter(onLineAdapter);
@@ -150,8 +151,11 @@ public class MainActy extends BaseActivity {
             }
         });
 
+
+
+
         //获取当前在线用户的人
-        NetTool.requestWithGet(context, Constant.Get_OnlineUsers, baseReqMap, new IDataCallBack<String>() {
+        NetTool.requestWithGet(context, Constant.onLineUsers, baseReqMap, new IDataCallBack<String>() {
 
             @Override
             public void closeDialog() {
@@ -257,44 +261,13 @@ public class MainActy extends BaseActivity {
 
             }
 
-        }).on("onLine", new Emitter.Listener() {
-
-            @Override
-            public void call(Object... args) {      //上线
-                JSONObject data = (JSONObject) args[0];
-                final String name = data.optString("user");
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        onLineList.add(name);
-                        onLineAdapter.notifyDataSetChanged();
-                        Toast.makeText(MainActy.this, name + "上线了", Toast.LENGTH_SHORT).show();
-                    }
-                });
-            }
-
-        }).on("offLine", new Emitter.Listener() {    //下线
-
-            @Override
-            public void call(Object... args) {
-                JSONObject data = (JSONObject) args[0];
-                final String name = data.optString("user");
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        onLineList.remove(name);
-                        onLineAdapter.notifyDataSetChanged();
-                        Toast.makeText(MainActy.this, name + "下线了", Toast.LENGTH_SHORT).show();
-                    }
-                });
-            }
-
         }).on(Socket.EVENT_DISCONNECT, new Emitter.Listener() {
 
             @Override
             public void call(Object... args) {
                 if (socket != null && !socket.connected()) { //重新连接
                     socket.connect();
+                    return;
                 }
                 runOnUiThread(new Runnable() {
                     @Override
@@ -308,34 +281,14 @@ public class MainActy extends BaseActivity {
 
             @Override
             public void call(Object... args) {
+                if (socket != null && !socket.connected()) { //重新连接
+                    socket.connect();
+                    return;
+                }
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        Toast.makeText(MainActy.this, "连接失败", Toast.LENGTH_SHORT).show();
-                    }
-                });
-            }
-
-        }).on(Socket.EVENT_CONNECT_TIMEOUT, new Emitter.Listener() {
-
-            @Override
-            public void call(Object... args) {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        Toast.makeText(MainActy.this, "连接超时", Toast.LENGTH_SHORT).show();
-                    }
-                });
-            }
-
-        }).on(Socket.EVENT_RECONNECT_FAILED, new Emitter.Listener() {
-
-            @Override
-            public void call(Object... args) {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        Toast.makeText(MainActy.this, "重连失败", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(MainActy.this, "重新连接", Toast.LENGTH_SHORT).show();
                     }
                 });
             }
@@ -348,18 +301,6 @@ public class MainActy extends BaseActivity {
                     @Override
                     public void run() {
                         Toast.makeText(MainActy.this, "错误发生，并且无法被其他事件类型所处理", Toast.LENGTH_SHORT).show();
-                    }
-                });
-            }
-
-        }).on(Socket.EVENT_MESSAGE, new Emitter.Listener() {
-
-            @Override
-            public void call(Object... args) {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        Toast.makeText(MainActy.this, "同服务器端message事件", Toast.LENGTH_SHORT).show();
                     }
                 });
             }
@@ -454,7 +395,6 @@ public class MainActy extends BaseActivity {
 
                 String to = toUser;
 
-
                 obj.put("from", Constant.Login_Name);
                 obj.put("to", to);
                 obj.put("chat_type", "chat");
@@ -471,7 +411,6 @@ public class MainActy extends BaseActivity {
                 }
 
                 obj.put("bodies", bodiesObj);
-
                 socket.emit("chat", obj);
 
                 message = JSON.parseObject(obj.toString(), VFMessage.class);
@@ -488,7 +427,6 @@ public class MainActy extends BaseActivity {
 
             listData.add(message);
             adapter.notifyDataSetChanged();
-
 
         } catch (JSONException e) {
 
@@ -569,8 +507,7 @@ public class MainActy extends BaseActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if (socket != null) {     //关闭连接
-            socket.disconnect();
-        }
+        socket.close();
+        AppManager.getInstance().AppExit(context);
     }
 }

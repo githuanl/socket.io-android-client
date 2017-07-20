@@ -2,13 +2,13 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/bg_color"
     android:gravity="center"
     android:orientation="vertical">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="@color/white"
         android:orientation="horizontal"
         android:paddingBottom="5dp"
         android:paddingLeft="15dp"
@@ -33,14 +33,14 @@
                 android:layout_width="100dp"
                 android:layout_height="20dp"
                 android:gravity="center_vertical"
-                android:text="张三丰"
+                android:text=""
                 android:textSize="12sp" />
 
 
             <RelativeLayout
                 android:layout_width="wrap_content"
-                android:background="@drawable/ease_chatfrom_bg"
-                android:layout_height="wrap_content">
+                android:layout_height="wrap_content"
+                android:background="@drawable/ease_chatfrom_bg">
 
                 <ImageView
                     android:id="@+id/iv_image"

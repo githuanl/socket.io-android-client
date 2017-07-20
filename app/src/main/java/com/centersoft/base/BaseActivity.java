@@ -15,6 +15,7 @@ import android.view.View;
 import android.view.Window;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
+import android.widget.TextView;
 
 import com.alibaba.fastjson.JSON;
 import com.centersoft.chat.R;
@@ -52,6 +53,11 @@ public abstract class BaseActivity extends AppCompatActivity {
     @BindView(R.id.toolbar)
     protected Toolbar toolbar;
 
+    @Nullable
+    @BindView(R.id.toobar_title)
+    protected TextView toobarTitle;
+
+
     protected ActionBar actionBar;
 
     @Override
@@ -75,6 +81,9 @@ public abstract class BaseActivity extends AppCompatActivity {
         actionBar = getSupportActionBar();
         if (actionBar == null) {
             setMyToolBar();
+            if (toobarTitle != null) {
+                actionBar.setTitle("");
+            }
         }
 
         if (actionBar != null) {
@@ -101,8 +110,6 @@ public abstract class BaseActivity extends AppCompatActivity {
     // 设置toobar
     protected void setMyToolBar() {
     }
-
-    ;
 
     /**
      * 初始化布局 前
@@ -174,7 +181,7 @@ public abstract class BaseActivity extends AppCompatActivity {
     /**
      * 返回前做处理
      */
-    protected boolean beforeBack() {
+    public boolean beforeBack() {
         return true;
     }
 
@@ -184,7 +191,7 @@ public abstract class BaseActivity extends AppCompatActivity {
      * @Description TODO
      * @author LH
      */
-    protected void goBack() {
+    public void goBack() {
         if (!beforeBack()) {
             return;
         }
@@ -198,7 +205,7 @@ public abstract class BaseActivity extends AppCompatActivity {
      *
      * @param pClass
      */
-    protected void openActivity(Class<?> pClass) {
+    public void openActivity(Class<?> pClass) {
         openActivity(pClass, null);
     }
 
@@ -208,7 +215,7 @@ public abstract class BaseActivity extends AppCompatActivity {
      * @param pClass
      * @param pBundle
      */
-    protected void openActivity(Class<?> pClass, Bundle pBundle) {
+    public void openActivity(Class<?> pClass, Bundle pBundle) {
         Intent intent = new Intent(this, pClass);
         if (pBundle != null) {
             intent.putExtras(pBundle);

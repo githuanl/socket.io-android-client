@@ -1,7 +1,13 @@
 package com.centersoft.base;
 
 import android.app.Application;
+import android.content.Context;
+import android.database.sqlite.SQLiteDatabase;
+import android.os.Handler;
 
+import com.blankj.utilcode.util.Utils;
+import com.centersoft.dao.DaoMaster;
+import com.centersoft.dao.DaoSession;
 import com.centersoft.util.Constant;
 import com.zhy.http.okhttp.OkHttpUtils;
 import com.zhy.http.okhttp.cookie.CookieJarImpl;
@@ -19,9 +25,18 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 
+
+
 public class ChatApplication extends Application {
 
     private static Socket socket;
+
+    private static ChatApplication application;
+
+    private static DaoSession daoSession;
+
+    private static int mainTid;
+    private static Handler handler;
 
     public static Socket getSocket() {
         if (socket == null) {
@@ -44,7 +59,14 @@ public class ChatApplication extends Application {
 
     @Override
     public void onCreate() {
+
         super.onCreate();
+
+        Utils.init(getApplicationContext());
+
+        application = this;
+        mainTid = android.os.Process.myTid();
+        handler = new Handler();
 
         // CookieJarImpl cookieJar = new CookieJarImpl(new MemoryCookieStore());
         CookieJarImpl cookieJar = new CookieJarImpl(new PersistentCookieStore(getApplicationContext()));
@@ -69,5 +91,36 @@ public class ChatApplication extends Application {
                 .build();
         OkHttpUtils.initClient(okHttpClient);
 
+
+        setupDatabase();
     }
+
+    public static Context getApplication() {
+        return application;
+    }
+
+    public static int getMainTid() {
+        return mainTid;
+    }
+
+    public static Handler getHandler() {
+        return handler;
+    }
+
+
+    /**
+     * 配置数据库
+     */
+    private void setupDatabase() {
+        DaoMaster.DevOpenHelper helper = new DaoMaster.DevOpenHelper(this, "vifu_chat.db", null);
+        SQLiteDatabase db = helper.getWritableDatabase();
+        DaoMaster daoMaster = new DaoMaster(db);
+        daoSession = daoMaster.newSession();
+    }
+
+    public static DaoSession getDaoInstant() {
+        return daoSession;
+    }
+
+
 }

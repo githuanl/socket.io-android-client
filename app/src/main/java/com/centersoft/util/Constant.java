@@ -19,9 +19,12 @@ public class Constant {
     //注册用户
     public static final String Register_Url =    "register";
 
-    public static final String Get_OnlineUsers = "onLineUsers";
+    public static final String onLineUsers = "onLineUsers";
 
     public static final String Upload_Files = "uploadFiles";
+
+    public static final String allUsers = "allUsers";
+
 
 }
 
