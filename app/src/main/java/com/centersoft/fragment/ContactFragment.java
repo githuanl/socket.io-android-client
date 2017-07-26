@@ -12,13 +12,14 @@ import com.bumptech.glide.Glide;
 import com.centersoft.ICallBack.IDataCallBack;
 import com.centersoft.base.BaseActivity;
 import com.centersoft.base.BaseListFragment;
-import com.centersoft.base.ChatApplication;
 import com.centersoft.chat.ChatActy;
 import com.centersoft.chat.R;
 import com.centersoft.effect.GlideCircleTransform;
+import com.centersoft.entity.EventBusType;
 import com.centersoft.entity.User;
 import com.centersoft.enums.VFCode;
 import com.centersoft.util.Constant;
+import com.centersoft.util.EBConstant;
 import com.centersoft.util.MyLog;
 import com.centersoft.util.NetTool;
 import com.centersoft.util.Tools;
@@ -28,18 +29,12 @@ import com.zhy.adapter.abslistview.ViewHolder;
 import java.util.ArrayList;
 import java.util.List;
 
-import io.socket.client.Socket;
-import io.socket.emitter.Emitter;
-
-import static com.centersoft.util.UiUtils.runOnUiThread;
-
 /**
  * Created by liudong on 2017/7/18.
  */
 
 public class ContactFragment extends BaseListFragment<User> {
 
-    Socket socket;
 
     List<String> onLineUsers;
 
@@ -52,42 +47,6 @@ public class ContactFragment extends BaseListFragment<User> {
     protected void initData() {
         super.initData();
         onLineUsers = new ArrayList<>();
-        socket = ChatApplication.getSocket();
-        socket.on("onLine", new Emitter.Listener() {
-
-            @Override
-            public void call(Object... args) {      //上线
-                org.json.JSONObject data = (org.json.JSONObject) args[0];
-                final String name = data.optString("user");
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        Tools.showToast(name + "上线", context);
-                        if (!onLineUsers.contains(name)) {
-                            onLineUsers.add(name);
-                        }
-                        refList();
-                    }
-                });
-            }
-
-        }).on("offLine", new Emitter.Listener() {    //下线
-
-            @Override
-            public void call(Object... args) {
-                org.json.JSONObject data = (org.json.JSONObject) args[0];
-                final String name = data.optString("user");
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        Tools.showToast(name + "下线了", context);
-                        onLineUsers.remove(name);
-                        refList();
-                    }
-                });
-            }
-
-        });
 
         refreshLayout.setEnabled(false);
         comAdapter = new CommonAdapter<User>(context, R.layout.lay_online_user, listData) {
@@ -148,6 +107,26 @@ public class ContactFragment extends BaseListFragment<User> {
             }
         });
     }
+
+    @Override
+    public void onResult(EventBusType data) {
+        if (data.getTag().equals(EBConstant.MESSAGEOFFLINE)) {
+            String name = (String) data.getE();
+            Tools.showToast(name + "下线", context);
+            if (!onLineUsers.contains(name)) {
+                onLineUsers.remove(name);
+            }
+            refList();
+        }else if(data.getTag().equals(EBConstant.MESSAGEONLINE)){
+            String name = (String) data.getE();
+            Tools.showToast(name + "上线", context);
+            if (!onLineUsers.contains(name)) {
+                onLineUsers.add(name);
+            }
+            refList();
+        }
+    }
+
 
     // 刷新列表
     private void refList() {

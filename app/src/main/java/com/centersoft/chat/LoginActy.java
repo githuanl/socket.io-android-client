@@ -87,8 +87,8 @@ public class LoginActy extends BaseActivity {
                     Tools.showToast(jobj.getString("message"), context);
                     return;
                 } else {
+                    Constant.auth_Token = jobj.getJSONObject("data").getString("auth_token");
                     Constant.Login_Name = baseReqMap.get("userName");
-                    Constant.Auth_Token = jobj.getJSONObject("data").getString("auth_token");
                     SPUtils.getInstance().put("loginName", baseReqMap.get("userName"));
                     SPUtils.getInstance().put("password", baseReqMap.get("password"));
                     openActivity(HomeActy.class);

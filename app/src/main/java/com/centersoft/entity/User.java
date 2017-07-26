@@ -1,42 +1,19 @@
 package com.centersoft.entity;
 
-import com.alibaba.fastjson.annotation.JSONField;
-
-import org.greenrobot.greendao.annotation.Entity;
-import org.greenrobot.greendao.annotation.Generated;
-
 /**
  * Created by liudong on 2017/7/18.
  */
 
-@Entity
 public class User extends BaseEnty {
 
-    private String id;
+    private int id;
     private String userId;
     private String name;
     private String headImageUrl;
     private String nickname;
     private String auth_token;
-    private long auth_date;
+    private long auth_date;             //token 过期日期
     private boolean isOnline = false;   // 是否在线
-
-    @Generated(hash = 810388287)
-    public User(String id, String userId, String name, String headImageUrl,
-            String nickname, String auth_token, long auth_date, boolean isOnline) {
-        this.id = id;
-        this.userId = userId;
-        this.name = name;
-        this.headImageUrl = headImageUrl;
-        this.nickname = nickname;
-        this.auth_token = auth_token;
-        this.auth_date = auth_date;
-        this.isOnline = isOnline;
-    }
-
-    @Generated(hash = 586692638)
-    public User() {
-    }
 
     public boolean isOnline() {
         return isOnline;
@@ -46,12 +23,11 @@ public class User extends BaseEnty {
         isOnline = online;
     }
 
-    public String getId() {
+    public int getId() {
         return id;
     }
 
-    @JSONField(name = "_id")
-    public void setId(String id) {
+    public void setId(int id) {
         this.id = id;
     }
 

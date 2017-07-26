@@ -15,6 +15,10 @@ public class EventBusType<E> {
         this.tag = tag;
     }
 
+    public EventBusType(String tag) {
+        this.tag = tag;
+    }
+
     public E getE() {
         return e;
     }

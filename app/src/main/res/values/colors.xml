@@ -9,6 +9,9 @@
     <!-- 白色 -->
     <color name="white">#ffffff</color>
 
+    <!-- red -->
+    <color name="red">#FF0000</color>
+
     <!--  背景颜色 -->
     <color name="bg_color">#f6f6f6</color>
 

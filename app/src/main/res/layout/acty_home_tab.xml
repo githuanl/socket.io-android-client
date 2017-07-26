@@ -15,16 +15,18 @@
             android:layout_width="24dp"
             android:layout_height="24dp"
             android:layout_centerHorizontal="true"
-            android:layout_marginTop="2dp" />
+            android:layout_marginTop="2dp"
+            android:src="@drawable/home_tab_message" />
 
         <TextView
             android:id="@+id/tv_message"
-            android:layout_width="18dp"
-            android:layout_height="18dp"
+            android:layout_width="16dp"
+            android:layout_height="16dp"
             android:layout_alignParentRight="true"
+            android:background="@drawable/bg_shape_red"
             android:gravity="center"
             android:textColor="@android:color/white"
-            android:textSize="8sp"
+            android:textSize="9sp"
             android:visibility="gone" />
 
     </RelativeLayout>

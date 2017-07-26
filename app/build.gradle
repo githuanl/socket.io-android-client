@@ -1,6 +1,5 @@
 apply plugin: 'com.android.application'
 apply plugin: 'com.jakewharton.butterknife'
-apply plugin: 'org.greenrobot.greendao'
 
 android {
     compileSdkVersion 25
@@ -20,17 +19,6 @@ android {
         }
     }
 
-    sourceSets {
-        main {
-            java.srcDirs = ['src/main/java', 'build/generated/source/greendao']
-        }
-    }
-}
-
-greendao {
-    schemaVersion 1
-    daoPackage 'com.centersoft.dao'
-    targetGenDir 'src/main/java'
 }
 
 
@@ -58,8 +46,10 @@ dependencies {
     compile 'com.github.bumptech.glide:glide:3.7.0'
     compile 'com.lzy.widget:imagepicker:0.5.5'
 
-    compile 'org.greenrobot:greendao:3.2.2' // add library
+
+    compile 'com.coolerfall:android-app-daemon:1.2.0'
+    compile 'com.nineoldandroids:library:2.4.0'
+
 //    compile 'com.koushikdutta.async:androidasync:2.+'
 
 }
-uploadArchives.enabled = false

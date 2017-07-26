@@ -2,19 +2,15 @@ package com.centersoft.base;
 
 import android.app.Application;
 import android.content.Context;
-import android.database.sqlite.SQLiteDatabase;
 import android.os.Handler;
 
 import com.blankj.utilcode.util.Utils;
-import com.centersoft.dao.DaoMaster;
-import com.centersoft.dao.DaoSession;
 import com.centersoft.util.Constant;
 import com.zhy.http.okhttp.OkHttpUtils;
 import com.zhy.http.okhttp.cookie.CookieJarImpl;
 import com.zhy.http.okhttp.cookie.store.PersistentCookieStore;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.concurrent.TimeUnit;
 
 import io.socket.client.IO;
@@ -25,6 +21,7 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 
+import static com.centersoft.util.Constant.auth_Token;
 
 
 public class ChatApplication extends Application {
@@ -32,8 +29,6 @@ public class ChatApplication extends Application {
     private static Socket socket;
 
     private static ChatApplication application;
-
-    private static DaoSession daoSession;
 
     private static int mainTid;
     private static Handler handler;
@@ -43,18 +38,22 @@ public class ChatApplication extends Application {
             IO.Options opts = new IO.Options();
             opts.forceNew = false;
             opts.reconnection = true;
-            opts.reconnectionDelay = 1000;      //延迟
-            opts.reconnectionDelayMax = 10000;   //延迟
-            opts.query = "auth_token=" + Constant.Auth_Token;
+            opts.reconnectionDelay = 2000;      //延迟
+            opts.reconnectionDelayMax = 8000;   //延迟
+            opts.reconnectionAttempts = -1;
+            opts.timeout = 8000;
+            opts.query = "auth_token=" + auth_Token;
             try {
                 socket = IO.socket(Constant.BaseUrl, opts);
                 return socket;
-            } catch (URISyntaxException e) {
-                return null;
+            } catch (Exception e) {
             }
-        } else {
-            return socket;
         }
+        return socket;
+    }
+
+    public static void closeSocket() {
+        socket = null;
     }
 
     @Override
@@ -91,8 +90,6 @@ public class ChatApplication extends Application {
                 .build();
         OkHttpUtils.initClient(okHttpClient);
 
-
-        setupDatabase();
     }
 
     public static Context getApplication() {
@@ -105,21 +102,6 @@ public class ChatApplication extends Application {
 
     public static Handler getHandler() {
         return handler;
-    }
-
-
-    /**
-     * 配置数据库
-     */
-    private void setupDatabase() {
-        DaoMaster.DevOpenHelper helper = new DaoMaster.DevOpenHelper(this, "vifu_chat.db", null);
-        SQLiteDatabase db = helper.getWritableDatabase();
-        DaoMaster daoMaster = new DaoMaster(db);
-        daoSession = daoMaster.newSession();
-    }
-
-    public static DaoSession getDaoInstant() {
-        return daoSession;
     }
 
 
