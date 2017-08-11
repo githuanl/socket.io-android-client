@@ -1,0 +1,44 @@
+<resources>
+
+    <!-- Base application theme. -->
+    <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
+        <!-- Customize your theme here. -->
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/colorAccent</item>
+
+        <item name="android:windowContentTransitions">true</item>
+
+    </style>
+
+
+    <style name="ToolbarPopupTheme" parent="@style/ThemeOverlay.AppCompat.Dark">
+        <item name="android:actionMenuTextColor">@color/white</item>
+        <item name="android:colorBackground">@color/colorPrimaryDark</item>
+        <item name="actionOverflowMenuStyle">@style/OverflowMenuStyles
+        </item> <!--新增一个item，用于控制menu-->
+    </style>
+
+    <style name="OverflowMenuStyles" parent="Widget.AppCompat.Light.PopupMenu.Overflow">
+        <item name="overlapAnchor">false</item>  <!--把该属性改为false即可使menu位置位于toolbar之下-->
+        <item name="android:dropDownVerticalOffset">5dip</item>
+    </style>
+
+    <style name="ThemeToolbar" parent="Theme.AppCompat.Light">
+        <item name="colorPrimary">@color/colorPrimaryDark</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="android:textColorPrimary">@color/white</item>
+        <!-- navigation icon color -->
+        <item name="colorControlNormal">@color/white</item>
+        <!-- color of the menu overflow icon -->
+        <item name="android:textColorSecondary">@color/white</item>
+    </style>
+
+
+    <style name="TextLabel" parent="Theme.AppCompat.Light.NoActionBar">
+        <!-- Label color in TRUE state and bar color FALSE and TRUE State -->
+        <item name="colorControlActivated">#FFCC00</item>
+    </style>
+
+
+</resources>

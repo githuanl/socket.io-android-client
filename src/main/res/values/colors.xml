@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <color name="colorPrimary">#146CD2</color>
+    <!-- old 378EF5  new 2da4ff-->
+    <color name="colorPrimaryDark">#2da4ff</color>
+    <color name="colorAccent">#2da4ff</color>
+
+    <!-- 白色 -->
+    <color name="white">#ffffff</color>
+
+    <!-- red -->
+    <color name="red">#FF0000</color>
+
+    <!--  背景颜色 -->
+    <color name="bg_color">#f6f6f6</color>
+
+    <color name="orange_500">#ff9800</color>
+    <color name="green_500">#259b24</color>
+
+
+    <!--  首页导航 背景颜色 -->
+    <color name="dht_bg_color">#f9f9f9</color>
+
+
+    <!-- 分隔线 颜色 @color/grey_300 dcdcdc-->
+    <color name="dividing_line">#dcdcdc</color>
+
+
+    <!-- 内容文本颜色 -->
+    <color name="NomalTextcolor">#373737</color>
+
+    <color name="SubTextcolor">#898a8a</color>
+
+    <color name="home_text">#4d5753</color>
+    <color name="home_tab_text">#707a83</color>
+    <color name="home_bottom_tab_color">@color/SubTextcolor</color>
+
+</resources>

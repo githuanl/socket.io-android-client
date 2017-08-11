@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:toolbar="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_alignParentTop="true">
+
+    <android.support.v7.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="75dp"
+        android:background="@drawable/qrx"
+        android:paddingTop="20dp"
+        app:navigationIcon="?attr/homeAsUpIndicator"
+        app:popupTheme="@style/ToolbarPopupTheme"
+        app:theme="@style/ThemeToolbar"
+        toolbar:titleTextColor="#ffffff">
+
+        <TextView
+            android:id="@+id/toobar_title"
+            android:layout_width="100dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:gravity="center"
+            android:text="@string/app_name"
+            android:textColor="#ffffff"
+            android:textSize="20sp" />
+
+    </android.support.v7.widget.Toolbar>
+
+</merge>
