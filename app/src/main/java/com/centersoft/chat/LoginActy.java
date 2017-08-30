@@ -43,6 +43,7 @@ public class LoginActy extends BaseActivity {
 
     @Override
     protected void initData() {
+
         super.initData();
 
         String loginname = SPUtils.getInstance().getString("loginName");
@@ -89,6 +90,7 @@ public class LoginActy extends BaseActivity {
                 } else {
                     Constant.auth_Token = jobj.getJSONObject("data").getString("auth_token");
                     Constant.Login_Name = baseReqMap.get("userName");
+                    SPUtils.getInstance().put("auth_token", Constant.auth_Token);
                     SPUtils.getInstance().put("loginName", baseReqMap.get("userName"));
                     SPUtils.getInstance().put("password", baseReqMap.get("password"));
                     openActivity(HomeActy.class);

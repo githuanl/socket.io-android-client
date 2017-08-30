@@ -14,8 +14,6 @@ public class Constant {
 
     public static String auth_Token = "";
 
-    public static boolean exit = false;
-
     public static String chatToUser = "";//当前正在聊天的人
 
     //注册用户

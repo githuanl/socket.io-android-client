@@ -15,9 +15,7 @@
     <!-- 获取当前wifi状态 -->
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <!-- 允许程序改变网络连接状态 -->
-    <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
-    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+
     <!-- 读取手机信息权限 -->
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
     <!-- 读取联系人权限，上传联系人需要用到此权限 -->
@@ -53,6 +51,11 @@
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
     <uses-permission android:name="android.permission.GET_TASKS" />
 
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+
+    <!--监听用户解锁 -->
+    <uses-permission android:name="android.permission.RECEIVE_USER_PRESENT" />
+
 
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
@@ -66,10 +69,10 @@
     <application
         android:name="com.centersoft.base.ChatApplication"
         android:allowBackup="true"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@drawable/ic_apple"
         android:label="@string/app_name"
         android:persistent="true"
-        android:roundIcon="@mipmap/ic_launcher_round"
+        android:roundIcon="@drawable/ic_apple"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
 
@@ -87,12 +90,33 @@
 
         <activity android:name=".ChatActy" />
 
-        <service android:name="com.centersoft.service.VFChatService" />
-
         <!--  图片选择 -->
         <activity
             android:name="com.lzy.imagepicker.ui.ImagePreviewDelActivity"
             android:theme="@style/ImagePickerThemeFullScreen" />
+
+
+        <service
+            android:name="com.centersoft.service.VFChatService"
+            android:enabled="true">
+            <intent-filter android:priority="1000">
+                <action android:name="com.centersoft.service.VFChatService" />
+            </intent-filter>
+        </service>
+
+        <receiver
+            android:name=".VFReceiver"
+            android:enabled="true">
+            <intent-filter>
+                <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
+                <action android:name="android.net.wifi.WIFI_STATE_CHANGED" />
+                <action android:name="android.net.wifi.STATE_CHANGE" />
+                <action android:name="android.intent.action.USER_PRESENT" /> <!-- 解锁 -->
+                <action android:name="cn.jpush.android.intent.CONNECTION" /> <!-- 接收网络变化 连接/断开 since 1.6.3 -->
+                <category android:name="cn.centersoft.vifu" />
+            </intent-filter>
+        </receiver>
+
 
     </application>
 

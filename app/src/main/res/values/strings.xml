@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">chat</string>
+    <string name="app_name">乱聊</string>
 
     <string name="login_success">login success</string>
     <string name="login">登录</string>

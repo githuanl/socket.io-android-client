@@ -24,14 +24,11 @@
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
 
-
-
--keepclassmembers class * extends org.greenrobot.greendao.AbstractDao {
-public static java.lang.String TABLENAME;
+#litepal
+-keep class org.litepal.** {
+    *;
 }
--keep class **$Properties
 
-# If you do not use SQLCipher:
--dontwarn org.greenrobot.greendao.database.**
-# If you do not use Rx:
--dontwarn rx.**
+-keep class * extends org.litepal.crud.DataSupport {
+    *;
+}

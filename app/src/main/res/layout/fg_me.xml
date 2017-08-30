@@ -4,5 +4,55 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
 
+    <EditText
+        android:id="@+id/roomName"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:gravity="center"
+        android:hint="群名称"
+        android:text="123"
+        android:textColor="@color/black" />
+
+
+    <Button
+        android:id="@+id/create_room"
+        android:layout_width="match_parent"
+        android:layout_height="42dp"
+        android:gravity="center"
+        android:text="创建群"
+        android:textColor="@color/black" />
+
+
+    <Button
+        android:id="@+id/add_room"
+        android:layout_width="match_parent"
+        android:layout_height="42dp"
+        android:gravity="center"
+        android:text="加入群"
+        android:textColor="@color/black" />
+
+    <Button
+        android:id="@+id/leave_room"
+        android:layout_width="match_parent"
+        android:layout_height="42dp"
+        android:layout_marginTop="20dp"
+        android:gravity="center"
+        android:text="退群"
+        android:textColor="@color/black" />
+
+    <EditText
+        android:id="@+id/text"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:text="想说点啥好呢" />
+
+    <TextView
+        android:id="@+id/send_msg"
+        android:layout_width="match_parent"
+        android:layout_height="42dp"
+        android:gravity="center"
+        android:text="发送群消息"
+        android:textColor="@color/black" />
+
 
 </LinearLayout>

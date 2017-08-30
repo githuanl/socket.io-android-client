@@ -90,6 +90,7 @@ public class ChatActy extends BaseActivity {
 
     Socket socket;
 
+
     @Override
     public int initResource() {
         return R.layout.acty_chat;
@@ -367,10 +368,8 @@ public class ChatActy extends BaseActivity {
                                     lv_list.setSelection(listData.size() - 1);
                                 } catch (Exception e) {
                                 }
-
                             }
                         });
-
 
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -411,7 +410,7 @@ public class ChatActy extends BaseActivity {
 
                         @Override
                         public void onAnimationEnd(Animator animation) {
-                            SystemClock.sleep(3000);
+                            SystemClock.sleep(2000);
                             ObjectAnimator.ofFloat(tv_message, "translationY", tv_message.getHeight(), 0).setDuration(500).start();
                         }
 
@@ -483,7 +482,6 @@ public class ChatActy extends BaseActivity {
                     baseDialog.show();
                     baseReqMap.clear();
 
-
                     Map<String, String> map = new HashMap<>();
                     baseReqMap.put("image", im.path);
                     map.put("file_submit", JSON.toJSONString(baseReqMap));
@@ -522,9 +520,7 @@ public class ChatActy extends BaseActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        if (!socket.connected()) { //示连接则重新连接
-            socket.open();
-        }
+        socket.open();
     }
 
 }
