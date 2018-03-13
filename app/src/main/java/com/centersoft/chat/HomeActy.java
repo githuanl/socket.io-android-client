@@ -83,6 +83,7 @@ public class HomeActy extends BaseActivity {
     @BindColor(R.color.colorPrimaryDark)
     int colorPrimaryDark;
 
+
     @Override
     public int initResource() {
         return R.layout.acty_home;
@@ -120,6 +121,7 @@ public class HomeActy extends BaseActivity {
         viewpager.setAdapter(adapter);
         viewpager.setOffscreenPageLimit(listFragment.size());
         adapter.notifyDataSetChanged();
+
 
         initBottomTab();
 
@@ -172,6 +174,7 @@ public class HomeActy extends BaseActivity {
                 .on(Socket.EVENT_CONNECT_TIMEOUT, onConnectTimeoutError)
                 .on("onLine", onLine)
                 .on("GroupChat", GroupChat)
+                .on("videoChat", onVideoChat)
                 .on("notification", notification)
                 .on("offLine", offLine);
         socket.connect();
@@ -208,6 +211,13 @@ public class HomeActy extends BaseActivity {
         startService(intent);
     }
 
+    private Emitter.Listener onVideoChat = new Emitter.Listener() {
+        @Override
+        public void call(Object... args) {
+
+        }
+    };
+
 
     //聊天
     private Emitter.Listener onChat = new Emitter.Listener() {
@@ -219,8 +229,10 @@ public class HomeActy extends BaseActivity {
                 ack.call(1);
 
                 JSONObject obj = (JSONObject) args[0];
-                String bod = obj.getString("bodies");
-                Bodies bodies = JSON.parseObject(bod, Bodies.class);
+                JSONObject bodis = obj.getJSONObject("bodies");
+//                Byte[] bodisByte = (Byte[]) bodis.get("fileData");
+                bodis.remove("fileData");
+                Bodies bodies = JSON.parseObject(bodis.toString(), Bodies.class);
                 obj.remove("bodies");
 
                 VFMessage msg = JSON.parseObject(obj.toString(), VFMessage.class);
@@ -510,6 +522,7 @@ public class HomeActy extends BaseActivity {
         socket.off("notification", notification);
         socket.off("GroupChat", GroupChat);
         socket.off("onLine", onLine);
+        socket.off("videoChat", onVideoChat);
         socket.off("offLine", offLine);
         socket = null;
 

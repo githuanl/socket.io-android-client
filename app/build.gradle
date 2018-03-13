@@ -23,33 +23,29 @@ android {
 
 
 dependencies {
-    compile fileTree(dir: 'libs', include: ['*.jar'])
+    compile fileTree(include: ['*.jar'], dir: 'libs')
     compile 'com.android.support:support-v4:25.3.0'
     compile 'com.android.support:design:25.3.0'
     compile 'com.android.support:appcompat-v7:25.3.0'
     compile 'com.android.support:recyclerview-v7:25.3.0'
     compile 'com.android.support:cardview-v7:25.3.0'
-
     compile('io.socket:socket.io-client:0.8.3') {
         exclude group: 'org.json', module: 'json'
     }
-
     compile 'com.blankj:utilcode:1.7.1'
     compile 'com.jakewharton:butterknife:8.6.0'
     annotationProcessor 'com.jakewharton:butterknife-compiler:8.6.0'
-
     compile 'org.greenrobot:eventbus:3.0.0'
     compile 'com.alibaba:fastjson:1.1.57.android'
     compile 'com.zhy:okhttputils:2.6.2'
     compile 'com.zhy:base-adapter:3.0.3'
-
     compile 'com.github.bumptech.glide:glide:3.7.0'
     compile 'com.lzy.widget:imagepicker:0.5.5'
-
-
     compile 'com.coolerfall:android-app-daemon:1.2.0'
     compile 'com.nineoldandroids:library:2.4.0'
+    //    compile 'com.koushikdutta.async:androidasync:2.+'
 
-//    compile 'com.koushikdutta.async:androidasync:2.+'
+    compile 'io.pristine:libjingle:8871@aar'
 
+    compile 'com.skyfishjy.ripplebackground:library:1.0.1'
 }

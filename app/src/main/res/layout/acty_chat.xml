@@ -7,93 +7,125 @@
     <include layout="@layout/toolbar" />
 
 
-    <RelativeLayout
+    <com.centersoft.effect.VFSwipeRefreshLayout
+        android:id="@+id/refresh_view"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_marginTop="-25dp"
-        android:fitsSystemWindows="true"
-        android:orientation="vertical">
+        android:layout_height="0dp"
+        android:layout_weight="1">
 
-        <FrameLayout
+        <com.centersoft.effect.VFListView
+            android:id="@+id/lv_list"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_marginBottom="50dp"
-            android:orientation="vertical">
+            android:background="#F2F4F6"
+            android:divider="@null" />
+    </com.centersoft.effect.VFSwipeRefreshLayout>
 
-            <com.centersoft.effect.VFSwipeRefreshLayout
-                android:id="@+id/refresh_view"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent">
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="0.6dp"
+        android:background="@color/dividing_line" />
 
-                <ListView
-                    android:id="@+id/lv_list"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:background="@color/white"
-                    android:divider="@null" />
-            </com.centersoft.effect.VFSwipeRefreshLayout>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="55dp"
+        android:background="@color/white"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
 
-            <TextView
-                android:id="@+id/tv_message"
-                android:layout_width="match_parent"
-                android:layout_height="45dp"
-                android:layout_marginTop="-46dp"
-                android:background="@color/green_500"
-                android:gravity="center"
-                android:text="1"
-                android:textColor="@color/white"
-                android:textSize="14sp" />
-        </FrameLayout>
 
-        <LinearLayout
-            android:layout_width="match_parent"
+        <CheckBox
+            android:id="@+id/popVoice"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_gravity="center_vertical"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="8dp"
+            android:background="@drawable/checkbox_pop_voice"
+            android:button="@null"
+            android:visibility="visible" />
+
+        <RelativeLayout
+            android:layout_width="0dp"
             android:layout_height="50dp"
-            android:layout_alignParentBottom="true"
-            android:background="@color/bg_color"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
+            android:layout_gravity="center_vertical"
+            android:layout_marginRight="2dp"
+            android:layout_weight="1">
 
-            <Button
-                android:layout_width="20dp"
-                android:layout_height="20dp"
-                android:layout_marginLeft="10dp"
-                android:background="@drawable/pzk"
-                android:textSize="12sp" />
 
             <EditText
                 android:id="@+id/message_input"
-                android:layout_width="0dp"
+                android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_marginLeft="10dp"
-                android:layout_weight="1"
                 android:imeOptions="actionSend"
                 android:inputType="text"
-                android:maxLines="1"
+                android:maxLines="2"
                 android:paddingLeft="10dp"
+                android:paddingRight="40dp"
                 android:singleLine="true"
-                android:textSize="12sp" />
+                android:textSize="14sp" />
+
+            <CheckBox
+                android:id="@+id/popEmoji"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:layout_alignParentRight="true"
+                android:layout_centerVertical="true"
+                android:layout_marginRight="8dp"
+                android:background="@drawable/checkbox_pop_emoji_big"
+                android:button="@null"
+                android:visibility="visible" />
+
+        </RelativeLayout>
+
+
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_gravity="center_vertical"
+            android:layout_marginRight="10dp">
+
+            <ImageButton
+                android:id="@+id/btn_send_pic"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:layout_centerInParent="true"
+                android:background="@drawable/message_button_add"
+                android:padding="5dp" />
 
             <Button
                 android:id="@+id/send_button"
                 android:layout_width="60dp"
-                android:layout_height="32dp"
-                android:layout_marginLeft="10dp"
-                android:background="@color/colorPrimaryDark"
+                android:layout_height="40dp"
+                android:layout_centerVertical="true"
+                android:background="@color/green_500"
                 android:text="发送"
                 android:textColor="@color/white"
-                android:textSize="13sp" />
+                android:textSize="12sp"
+                android:visibility="gone" />
+        </RelativeLayout>
+    </LinearLayout>
 
-            <Button
-                android:id="@+id/btn_send_pic"
-                android:layout_width="30dp"
-                android:layout_height="30dp"
-                android:layout_marginLeft="16dp"
-                android:layout_marginRight="16dp"
-                android:background="@drawable/ozp"
-                android:textSize="12sp" />
-        </LinearLayout>
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
 
 
-    </RelativeLayout>
+        <include
+            android:id="@+id/include_emoji"
+            layout="@layout/acty_chat_emoji"
+            android:visibility="gone" />
 
+        <include
+            android:id="@+id/include_more"
+            layout="@layout/acty_chat_more"
+            android:visibility="gone" />
+
+        <include
+            android:id="@+id/include_voice_view"
+            layout="@layout/include_voice_view"
+            android:visibility="gone" />
+
+
+    </FrameLayout>
 </LinearLayout>

@@ -39,6 +39,7 @@
     <!-- 拨打电话 -->
     <uses-permission android:name="android.permission.CALL_PHONE" />
 
+
     <!-- 指纹识别 -->
     <uses-permission android:name="android.permission.USE_FINGERPRINT" />
     <uses-permission android:name="android.permission.WRITE_SETTINGS" />
@@ -88,7 +89,11 @@
 
         <activity android:name=".HomeActy" />
 
-        <activity android:name=".ChatActy" />
+        <activity
+            android:name=".ChatActy"
+            android:windowSoftInputMode="adjustPan" />
+
+        <activity android:name=".VideoActy" />
 
         <!--  图片选择 -->
         <activity

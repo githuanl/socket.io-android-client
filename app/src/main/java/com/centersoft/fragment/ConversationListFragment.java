@@ -53,7 +53,9 @@ public class ConversationListFragment extends BaseListFragment<VFMessage> {
                         .setText(R.id.tv_date, Tools.transTime(msg.getTimestamp()));
                 if (msg.getBodies().getType() == Body_type.txt) {
                     viewHolder.setText(R.id.tv_msg, msg.getBodies().getMsg());
-                } else {
+                } else if (msg.getBodies().getType() == Body_type.audio) {
+                    viewHolder.setText(R.id.tv_msg, "[语音]");
+                } else if (msg.getBodies().getType() == Body_type.img) {
                     viewHolder.setText(R.id.tv_msg, "[图片]");
                 }
 
