@@ -16,7 +16,6 @@ public class Constant {
 
     public static String chatToUser = "";//当前正在聊天的人
 
-
     //注册用户
     public static final String Register_Url =    "register";
 

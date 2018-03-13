@@ -27,6 +27,11 @@ public class MyLog {
         if (ISDEBUG) Log.v(tag, msg);
     }
 
+    public static void i(String msg) {
+
+        if (ISDEBUG) Log.i("Mylog====>", msg);
+    }
+
     public static void i(String tag, String msg) {
 
 //		if(ISDEBUG) KLog.json(msg);

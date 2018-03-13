@@ -8,6 +8,7 @@ import android.graphics.BitmapFactory;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.media.RingtoneManager;
+import android.os.Bundle;
 import android.os.PowerManager;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
@@ -44,6 +45,7 @@ import com.centersoft.util.Tools;
 import com.centersoft.util.UiUtils;
 
 import org.greenrobot.eventbus.EventBus;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -83,7 +85,6 @@ public class HomeActy extends BaseActivity {
     @BindColor(R.color.colorPrimaryDark)
     int colorPrimaryDark;
 
-
     @Override
     public int initResource() {
         return R.layout.acty_home;
@@ -121,7 +122,6 @@ public class HomeActy extends BaseActivity {
         viewpager.setAdapter(adapter);
         viewpager.setOffscreenPageLimit(listFragment.size());
         adapter.notifyDataSetChanged();
-
 
         initBottomTab();
 
@@ -174,9 +174,34 @@ public class HomeActy extends BaseActivity {
                 .on(Socket.EVENT_CONNECT_TIMEOUT, onConnectTimeoutError)
                 .on("onLine", onLine)
                 .on("GroupChat", GroupChat)
-                .on("videoChat", onVideoChat)
                 .on("notification", notification)
                 .on("offLine", offLine);
+
+        // 视频通话请求
+        socket.on("videoChat", new Emitter.Listener() {
+            @Override
+            public void call(Object... args) {
+
+                JSONObject dataObject = (JSONObject) args[0];
+
+                try {
+                    String fromUser = dataObject.getString("from_user");
+                    String room = dataObject.getString("room");
+
+                    Bundle bundle = new Bundle();
+                    bundle.putString("fromUser", fromUser);
+                    bundle.putString("toUser", Constant.Login_Name);
+                    bundle.putString("room", room);
+                    bundle.putInt("type", 1);
+                    openActivity(VideoChatActivity.class, bundle);
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
+            }
+        });
+
         socket.connect();
 
         if (l == null) {
@@ -207,16 +232,9 @@ public class HomeActy extends BaseActivity {
             });
         }
 
-        Intent intent = new Intent(this, VFChatService.class);
-        startService(intent);
+//        Intent intent = new Intent(this, VFChatService.class);
+//        startService(intent);
     }
-
-    private Emitter.Listener onVideoChat = new Emitter.Listener() {
-        @Override
-        public void call(Object... args) {
-
-        }
-    };
 
 
     //聊天
@@ -229,10 +247,8 @@ public class HomeActy extends BaseActivity {
                 ack.call(1);
 
                 JSONObject obj = (JSONObject) args[0];
-                JSONObject bodis = obj.getJSONObject("bodies");
-//                Byte[] bodisByte = (Byte[]) bodis.get("fileData");
-                bodis.remove("fileData");
-                Bodies bodies = JSON.parseObject(bodis.toString(), Bodies.class);
+                String bod = obj.getString("bodies");
+                Bodies bodies = JSON.parseObject(bod, Bodies.class);
                 obj.remove("bodies");
 
                 VFMessage msg = JSON.parseObject(obj.toString(), VFMessage.class);
@@ -522,8 +538,11 @@ public class HomeActy extends BaseActivity {
         socket.off("notification", notification);
         socket.off("GroupChat", GroupChat);
         socket.off("onLine", onLine);
-        socket.off("videoChat", onVideoChat);
         socket.off("offLine", offLine);
+        socket.off("videoChat");
+
+
+
         socket = null;
 
     }

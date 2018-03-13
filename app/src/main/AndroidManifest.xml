@@ -2,9 +2,14 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.centersoft.chat">
 
+
+    <uses-feature android:name="android.hardware.camera.autofocus" />
+    <uses-feature android:glEsVersion="0x00020000" android:required="true" />
+
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- 相机 -->
     <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:name="android.hardware.camera.autofocus" />
 
     <uses-feature
         android:name="android.hardware.camera"
@@ -38,7 +43,6 @@
 
     <!-- 拨打电话 -->
     <uses-permission android:name="android.permission.CALL_PHONE" />
-
 
     <!-- 指纹识别 -->
     <uses-permission android:name="android.permission.USE_FINGERPRINT" />
@@ -89,11 +93,10 @@
 
         <activity android:name=".HomeActy" />
 
-        <activity
-            android:name=".ChatActy"
-            android:windowSoftInputMode="adjustPan" />
+        <activity android:name=".ChatActy" />
 
-        <activity android:name=".VideoActy" />
+
+        <activity android:name=".VideoChatActivity"/>
 
         <!--  图片选择 -->
         <activity

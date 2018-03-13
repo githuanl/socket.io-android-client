@@ -2,13 +2,13 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F2F4F6"
     android:gravity="center"
     android:orientation="vertical">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="@color/white"
         android:orientation="horizontal"
         android:paddingBottom="5dp"
         android:paddingLeft="15dp"
@@ -28,86 +28,42 @@
             android:maxWidth="160dp"
             android:orientation="vertical">
 
-            <FrameLayout
-                android:layout_width="match_parent"
-                android:layout_height="match_parent">
+            <TextView
+                android:id="@+id/tv_name"
+                android:layout_width="100dp"
+                android:layout_height="20dp"
+                android:gravity="center_vertical"
+                android:text=""
+                android:textSize="12sp" />
+
+
+            <RelativeLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/ease_chatfrom_bg">
+
+                <ImageView
+                    android:id="@+id/iv_image"
+                    android:layout_width="150dp"
+                    android:layout_height="150dp"
+                    android:layout_alignParentTop="true"
+                    android:visibility="gone" />
 
                 <TextView
-                    android:id="@+id/tv_name"
-                    android:layout_width="100dp"
-                    android:layout_height="20dp"
-                    android:gravity="center_vertical"
-                    android:text="12444"
-                    android:textSize="12sp" />
-
-
-                <FrameLayout
+                    android:id="@+id/tv_text"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="25dp">
-
-                    <LinearLayout
-                        android:id="@+id/ll_image"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:background="@drawable/message_list_item_left_selector"
-                        android:visibility="gone">
-
-                        <ImageView
-                            android:id="@+id/iv_image"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:adjustViewBounds="true"
-                            android:maxHeight="180dp"
-                            android:maxWidth="180dp"
-                            android:scaleType="fitCenter" />
-                    </LinearLayout>
-
-                    <TextView
-                        android:id="@+id/tv_text"
-                        android:layout_width="wrap_content"
-                        android:layout_height="match_parent"
-                        android:background="@drawable/message_list_item_left_selector"
-                        android:gravity="center_vertical"
-                        android:maxWidth="225.0dip"
-                        android:minHeight="20dp"
-                        android:paddingLeft="10dp"
-                        android:paddingRight="10dp"
-                        android:text="sdfsdfsfsdfssf"
-                        android:textColor="#000000"
-                        android:textSize="14sp"
-                        android:visibility="gone" />
-
-
-                    <RelativeLayout
-                        android:id="@+id/rl_audio"
-                        android:layout_width="100dp"
-                        android:layout_height="wrap_content"
-                        android:background="@drawable/message_list_item_left_selector">
-
-                        <ImageView
-                            android:layout_width="20dp"
-                            android:layout_height="20dp"
-                            android:layout_centerVertical="true"
-                            android:layout_marginLeft="10dp"
-                            android:adjustViewBounds="true"
-                            android:scaleType="fitCenter"
-                            android:src="@drawable/bubble_left_play" />
-
-                        <TextView
-                            android:id="@+id/duration"
-                            android:layout_width="40dp"
-                            android:layout_height="20dp"
-                            android:layout_alignParentRight="true"
-                            android:layout_centerVertical="true"
-                            android:layout_marginRight="5dp"
-                            android:gravity="right|center_vertical"
-                            android:text="64.02''" />
-                    </RelativeLayout>
-
-
-                </FrameLayout>
-            </FrameLayout>
+                    android:layout_centerInParent="true"
+                    android:autoLink="web"
+                    android:gravity="center|left"
+                    android:lineSpacingExtra="2dp"
+                    android:maxWidth="225.0dip"
+                    android:minHeight="30dp"
+                    android:paddingLeft="5dp"
+                    android:paddingRight="6dp"
+                    android:textColor="#000000"
+                    android:textSize="15sp" />
+            </RelativeLayout>
 
         </LinearLayout>
 

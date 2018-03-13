@@ -7,42 +7,12 @@ import com.centersoft.enums.Body_type;
  * 消息 entity
  */
 
-public class Bodies extends BaseEnty {
+public class Bodies extends BaseEnty{
 
     private Body_type type;
     private String msg;             //消息内容
     private String imgUrl;             //imageUrl
     private String imageName;       //imageName
-    private Byte[] fileData;
-    private String fileName;
-    private String fileRemotePath;
-    private long latitude;
-    private long longitude;
-    private int duration;
-
-    public String getFileName() {
-        return fileName;
-    }
-
-    public void setFileName(String fileName) {
-        this.fileName = fileName;
-    }
-
-    public String getFileRemotePath() {
-        return fileRemotePath;
-    }
-
-    public void setFileRemotePath(String fileRemotePath) {
-        this.fileRemotePath = fileRemotePath;
-    }
-
-    public Byte[] getFileData() {
-        return fileData;
-    }
-
-    public void setFileData(Byte[] fileData) {
-        this.fileData = fileData;
-    }
 
     public Bodies(Body_type type, String msg) {
         this.type = type;
@@ -55,7 +25,7 @@ public class Bodies extends BaseEnty {
         this.imageName = imageName;
     }
 
-    public Bodies() {
+    public Bodies(){
 
     }
 
@@ -91,27 +61,5 @@ public class Bodies extends BaseEnty {
         this.imageName = imageName;
     }
 
-    public long getLatitude() {
-        return latitude;
-    }
 
-    public void setLatitude(long latitude) {
-        this.latitude = latitude;
-    }
-
-    public long getLongitude() {
-        return longitude;
-    }
-
-    public void setLongitude(long longitude) {
-        this.longitude = longitude;
-    }
-
-    public int getDuration() {
-        return duration;
-    }
-
-    public void setDuration(int duration) {
-        this.duration = duration;
-    }
 }

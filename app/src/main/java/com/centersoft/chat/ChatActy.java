@@ -1,87 +1,71 @@
 package com.centersoft.chat;
 
 import android.content.Intent;
-import android.media.AudioManager;
-import android.media.MediaPlayer;
 import android.os.Bundle;
-import android.os.Environment;
+import android.os.SystemClock;
 import android.support.v4.widget.SwipeRefreshLayout;
-import android.text.Editable;
 import android.text.TextUtils;
-import android.text.TextWatcher;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
-import android.widget.AdapterView;
 import android.widget.Button;
-import android.widget.CheckBox;
-import android.widget.CompoundButton;
 import android.widget.EditText;
-import android.widget.GridView;
-import android.widget.ImageButton;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
+import android.widget.ListView;
 import android.widget.TextView;
 
 import com.alibaba.fastjson.JSON;
-import com.blankj.utilcode.util.FileUtils;
 import com.blankj.utilcode.util.KeyboardUtils;
+import com.blankj.utilcode.util.SPUtils;
 import com.bumptech.glide.Glide;
-import com.centersoft.ICallBack.VoiceRecordCompleteCallback;
+import com.centersoft.ICallBack.IDataCallBack;
 import com.centersoft.base.BaseActivity;
 import com.centersoft.base.ChatApplication;
 import com.centersoft.db.dao.ConversationDao;
 import com.centersoft.db.dao.VFMessageDao;
-import com.centersoft.effect.VFListView;
 import com.centersoft.effect.VFSwipeRefreshLayout;
 import com.centersoft.entity.Bodies;
 import com.centersoft.entity.EventBusType;
 import com.centersoft.entity.User;
 import com.centersoft.entity.VFMessage;
 import com.centersoft.enums.Body_type;
+import com.centersoft.enums.VFCode;
 import com.centersoft.util.Constant;
 import com.centersoft.util.EBConstant;
 import com.centersoft.util.GlideImageLoader;
 import com.centersoft.util.KeyboardStatusDetector;
+import com.centersoft.util.MyLog;
+import com.centersoft.util.NetTool;
 import com.centersoft.util.Tools;
 import com.centersoft.util.UiUtils;
 import com.lzy.imagepicker.ImagePicker;
 import com.lzy.imagepicker.bean.ImageItem;
-import com.lzy.imagepicker.ui.ImageGridActivity;
 import com.lzy.imagepicker.view.CropImageView;
-import com.zhy.adapter.abslistview.CommonAdapter;
+import com.nineoldandroids.animation.Animator;
+import com.nineoldandroids.animation.ObjectAnimator;
 import com.zhy.adapter.abslistview.MultiItemTypeAdapter;
 import com.zhy.adapter.abslistview.ViewHolder;
 import com.zhy.adapter.abslistview.base.ItemViewDelegate;
-import com.zhy.http.okhttp.OkHttpUtils;
-import com.zhy.http.okhttp.callback.FileCallBack;
 
 import org.greenrobot.eventbus.EventBus;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedOutputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import butterknife.BindView;
 import butterknife.OnClick;
 import io.socket.client.Ack;
 import io.socket.client.Socket;
-import okhttp3.Call;
 
 import static com.centersoft.util.Constant.chatToUser;
 
 //聊天界面
-public class ChatActy extends BaseActivity implements VoiceRecordCompleteCallback {
+public class ChatActy extends BaseActivity {
 
     private static final int IMAGE_PICKER = 2;
 
@@ -89,7 +73,7 @@ public class ChatActy extends BaseActivity implements VoiceRecordCompleteCallbac
     protected VFSwipeRefreshLayout refreshLayout;
 
     @BindView(R.id.lv_list)
-    protected VFListView lv_list;
+    protected ListView lv_list;
 
     protected List<VFMessage> listData = new ArrayList();
 
@@ -105,58 +89,6 @@ public class ChatActy extends BaseActivity implements VoiceRecordCompleteCallbac
 
     Socket socket;
 
-    @BindView(R.id.gridView)
-    GridView gridView;
-
-    @BindView(R.id.send_button)
-    Button send_button;
-
-    @BindView(R.id.btn_send_pic)
-    ImageButton btn_send_pic;
-
-    @BindView(R.id.include_more)
-    View include_more;
-
-    @BindView(R.id.include_voice_view)
-    View include_voice_view;
-
-    @BindView(R.id.popVoice)
-    CheckBox popVoice;
-
-    static enum KeyboardAdd {
-
-
-        location("位置", R.drawable.keyboard_add_location, ChatActy.class),
-
-        photo("相册", R.drawable.keyboard_add_photo, ChatActy.class),
-
-        video("视频", R.drawable.keyboard_add_video, VideoActy.class);
-
-        private int res;
-        private String name;
-        private Class aClass;
-
-
-        private KeyboardAdd(String name, int res, Class aClass) {
-            this.name = name;
-            this.res = res;
-            this.aClass = aClass;
-        }
-
-        public int getDwRes() {
-            return res;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public Class getaClass() {
-            return aClass;
-        }
-
-
-    }
 
     @Override
     public int initResource() {
@@ -174,80 +106,17 @@ public class ChatActy extends BaseActivity implements VoiceRecordCompleteCallbac
         actionBar = getSupportActionBar();
     }
 
+    @BindView(R.id.tv_message)
+    TextView tv_message;    //新消息
+
+    @BindView(R.id.send_button)
+    Button send_button;
 
     String toUser = "";
     User user;
 
     VFMessageDao messageDao;
     ConversationDao conversationDao;
-
-    //发送语音
-    @Override
-    public void recordFinished(long duration, String voicePath) {
-
-
-        try {
-            JSONObject obj = new JSONObject();
-
-            obj.put("from_user", Constant.Login_Name);
-            obj.put("to_user", toUser);
-            obj.put("chat_type", "chat");
-
-            JSONObject bodiesObj = new JSONObject();
-            bodiesObj.put("type", "audio");
-            bodiesObj.put("duration", duration / 1000);
-            byte[] fileByte = File2byte(voicePath);
-            bodiesObj.put("fileData", fileByte);
-            bodiesObj.put("fileName", voicePath.replace(Environment.getExternalStorageDirectory().getPath() + "/luanliao/", ""));
-            obj.put("bodies", bodiesObj);
-
-            socket.emit("chat", obj, new Ack() {
-
-                @Override
-                public void call(Object... args) {
-
-                    try {
-                        if (args.length > 1) {      //给 服务器发回调 客户端收到消息了
-                            Ack ack = (Ack) args[args.length - 1];
-                            ack.call();
-                        }
-
-                        JSONObject obj = (JSONObject) args[0];
-                        String bod = obj.getString("bodies");
-                        Bodies bodies = JSON.parseObject(bod, Bodies.class);
-                        obj.remove("bodies");
-
-                        VFMessage msg = JSON.parseObject(obj.toString(), VFMessage.class);
-                        msg.setBodies(bodies);
-
-                        listData.add(msg);
-                        messageDao.saveMessage(msg);
-                        conversationDao.saveOrUpdateConversation(msg);
-
-                        UiUtils.runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                try {
-                                    adapter.notifyDataSetChanged();
-                                    lv_list.setSelection(listData.size() - 1);
-                                } catch (Exception e) {
-                                }
-                            }
-                        });
-
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-
-                }
-            });
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-
-    }
-
-    private MediaPlayer mMyMediaPlayer;
 
     @Override
     protected void initData() {
@@ -299,62 +168,6 @@ public class ChatActy extends BaseActivity implements VoiceRecordCompleteCallbac
             }
         });
 
-
-        lv_list.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-
-                VFMessage vfMessage = listData.get(position);
-                switch (vfMessage.getBodies().getType()) {
-                    case audio:
-                        final String path = vfMessage.getBodies().getFileRemotePath().replace("audios/", "");
-                        final String sdPath = Environment.getExternalStorageDirectory().getPath() + "/luanliao/";
-
-                        if (mMyMediaPlayer == null) {
-                            mMyMediaPlayer = new MediaPlayer();
-                        } else {
-                            mMyMediaPlayer.reset();
-                        }
-
-                        if (FileUtils.isFileExists(sdPath + path)) {        //文件已经下载
-                            try {
-                                mMyMediaPlayer.setDataSource(sdPath + path);
-                                mMyMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-                                mMyMediaPlayer.prepare();
-                                mMyMediaPlayer.start();
-                            } catch (IOException e) {
-                            }
-                        } else {                                            //去下载
-                            OkHttpUtils//
-                                    .get()//
-                                    .tag(context)
-                                    .url(Constant.BaseUrl + "/" + vfMessage.getBodies().getFileRemotePath())//
-                                    .build()//
-                                    .execute(new FileCallBack(sdPath, path) {
-                                        @Override
-                                        public void onError(Call call, Exception e, int id) {
-
-                                        }
-
-                                        @Override
-                                        public void onResponse(File response, int id) {
-                                            try {
-                                                mMyMediaPlayer.setDataSource(sdPath + path);
-                                                mMyMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-                                                mMyMediaPlayer.prepare();
-                                                mMyMediaPlayer.start();
-                                            } catch (IOException e) {
-                                            }
-                                        }
-                                    });
-                        }
-
-                        break;
-                }
-            }
-        });
-
-
         View rootView = getWindow().getDecorView().findViewById(android.R.id.content);
 
         new KeyboardStatusDetector()
@@ -364,34 +177,9 @@ public class ChatActy extends BaseActivity implements VoiceRecordCompleteCallbac
                     public void onVisibilityChanged(boolean keyboardVisible) {
                         if (keyboardVisible) {
                             lv_list.setSelection(listData.size() - 1 > 0 ? listData.size() - 1 : 0);
-                        } else {
-                            include_more.setVisibility(View.GONE);
                         }
                     }
                 });
-
-        messageInput.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-
-            }
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-                if (!TextUtils.isEmpty(s)) {
-                    btn_send_pic.setVisibility(View.GONE);
-                    send_button.setVisibility(View.VISIBLE);
-                } else {
-                    btn_send_pic.setVisibility(View.VISIBLE);
-                    send_button.setVisibility(View.GONE);
-                }
-            }
-
-            @Override
-            public void afterTextChanged(Editable s) {
-
-            }
-        });
 
         messageInput.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
@@ -403,15 +191,6 @@ public class ChatActy extends BaseActivity implements VoiceRecordCompleteCallbac
                 return false;
             }
         });
-
-        popVoice.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                include_more.setVisibility(View.GONE);
-                include_voice_view.setVisibility(include_voice_view.getVisibility() == View.GONE ? View.VISIBLE : View.GONE);
-            }
-        });
-
 
         //将其设置未读数为0
         conversationDao.updateConversationUnReadNum(Constant.Login_Name, toUser);
@@ -456,38 +235,7 @@ public class ChatActy extends BaseActivity implements VoiceRecordCompleteCallbac
             }
         });
 
-        final List<KeyboardAdd> gridData = new ArrayList<>();
-        for (KeyboardAdd keyboardAdd : KeyboardAdd.values()) {
-            gridData.add(keyboardAdd);
-        }
 
-        CommonAdapter grideAdapter = new CommonAdapter<KeyboardAdd>(context, R.layout.acty_chat_grid_item, gridData) {
-            @Override
-            protected void convert(ViewHolder vh, KeyboardAdd op, int position) {
-                Glide.with(context)
-                        .load(op.getDwRes())
-                        .into((ImageView) vh.getView(R.id.iv_image));
-                vh.setText(R.id.tv_name, op.getName());
-            }
-        };
-
-        gridView.setAdapter(grideAdapter);
-        grideAdapter.notifyDataSetChanged();
-
-        gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                KeyboardAdd keyboardAdd = gridData.get(position);
-                if (keyboardAdd.getName().equals("视频")) {
-                    Bundle bl = new Bundle();
-                    bl.putString("to_user", toobarTitle.getText().toString());
-                    openActivity(keyboardAdd.getaClass(), bl);
-                } else if (keyboardAdd.getName().equals("相册")) {
-                    Intent intent = new Intent(context, ImageGridActivity.class);
-                    startActivityForResult(intent, IMAGE_PICKER);
-                }
-            }
-        });
     }
 
 
@@ -509,41 +257,19 @@ public class ChatActy extends BaseActivity implements VoiceRecordCompleteCallbac
 
         @Override
         public void convert(ViewHolder holder, VFMessage vfMessage, int position) {
-
-            RelativeLayout rl_audio = holder.getView(R.id.rl_audio);
-            TextView tv_text = holder.getView(R.id.tv_text);
-            LinearLayout ll_image = holder.getView(R.id.ll_image);
-
-            holder.setText(R.id.tv_name, vfMessage.getFrom_user());
-
-            switch (vfMessage.getBodies().getType()) {
-                case img:
-                    ll_image.setVisibility(View.VISIBLE);
-                    tv_text.setVisibility(View.GONE);
-                    rl_audio.setVisibility(View.GONE);
-
-                    String imageUrl = Constant.BaseUrl + "/" + vfMessage.getBodies().getFileRemotePath();
-                    Glide.with(context)
-                            .load(imageUrl)
-                            .into((ImageView) holder.getView(R.id.iv_image));
-
-                    break;
-                case audio:
-                    rl_audio.setVisibility(View.VISIBLE);
-                    tv_text.setVisibility(View.GONE);
-                    ll_image.setVisibility(View.GONE);
-                    holder.setText(R.id.duration, vfMessage.getBodies().getDuration() + "''");
-                    break;
-                case txt:
-                    tv_text.setVisibility(View.VISIBLE);
-                    ll_image.setVisibility(View.GONE);
-                    rl_audio.setVisibility(View.GONE);
-                    tv_text.setText(vfMessage.getBodies().getMsg());
-                    break;
-
+            if (vfMessage.getBodies().getType() == Body_type.img) {
+                holder.getView(R.id.iv_image).setVisibility(View.VISIBLE);
+                holder.getView(R.id.tv_text).setVisibility(View.GONE);
+                String imageUrl = Constant.BaseUrl + "/" + vfMessage.getBodies().getImgUrl();
+                Glide.with(context)
+                        .load(imageUrl)
+                        .into((ImageView) holder.getView(R.id.iv_image));
+            } else {
+                holder.getView(R.id.iv_image).setVisibility(View.GONE);
+                holder.getView(R.id.tv_text).setVisibility(View.VISIBLE);
+                holder.setText(R.id.tv_name, vfMessage.getFrom_user())
+                        .setText(R.id.tv_text, vfMessage.getBodies().getMsg());
             }
-
-
         }
     }
 
@@ -565,40 +291,19 @@ public class ChatActy extends BaseActivity implements VoiceRecordCompleteCallbac
         @Override
         public void convert(ViewHolder holder, VFMessage vfMessage, int position) {
 
-            RelativeLayout rl_audio = holder.getView(R.id.rl_audio);
-            TextView tv_text = holder.getView(R.id.tv_text);
-            LinearLayout ll_image = holder.getView(R.id.ll_image);
-
-            holder.setText(R.id.tv_name, vfMessage.getFrom_user());
-
-            switch (vfMessage.getBodies().getType()) {
-                case img:
-                    ll_image.setVisibility(View.VISIBLE);
-                    tv_text.setVisibility(View.GONE);
-                    rl_audio.setVisibility(View.GONE);
-
-                    String imageUrl = Constant.BaseUrl + "/" + vfMessage.getBodies().getFileRemotePath();
-                    Glide.with(context)
-                            .load(imageUrl)
-                            .into((ImageView) holder.getView(R.id.iv_image));
-
-                    break;
-                case audio:
-                    rl_audio.setVisibility(View.VISIBLE);
-                    tv_text.setVisibility(View.GONE);
-                    ll_image.setVisibility(View.GONE);
-                    holder.setText(R.id.duration, vfMessage.getBodies().getDuration() + "''");
-                    break;
-                case txt:
-                    tv_text.setVisibility(View.VISIBLE);
-                    ll_image.setVisibility(View.GONE);
-                    rl_audio.setVisibility(View.GONE);
-                    tv_text.setText(vfMessage.getBodies().getMsg());
-                    break;
-
+            if (vfMessage.getBodies().getType() == Body_type.img) {
+                holder.getView(R.id.iv_image).setVisibility(View.VISIBLE);
+                holder.getView(R.id.tv_text).setVisibility(View.GONE);
+                String imageUrl = Constant.BaseUrl + "/" + vfMessage.getBodies().getImgUrl();
+                Glide.with(context)
+                        .load(imageUrl)
+                        .into((ImageView) holder.getView(R.id.iv_image));
+            } else {
+                holder.getView(R.id.iv_image).setVisibility(View.GONE);
+                holder.getView(R.id.tv_text).setVisibility(View.VISIBLE);
+                holder.setText(R.id.tv_name, vfMessage.getFrom_user())
+                        .setText(R.id.tv_text, vfMessage.getBodies().getMsg());
             }
-
-
         }
 
     }
@@ -694,8 +399,31 @@ public class ChatActy extends BaseActivity implements VoiceRecordCompleteCallbac
             } else {
                 if (!TextUtils.isEmpty(Constant.chatToUser)) {
                     String msgTxt = msg.getBodies().getType().equals(Body_type.txt) ? msg.getBodies().getMsg() : "[图片]";
+                    tv_message.setText(msg.getFrom_user() + ":" + msgTxt);
+                    ObjectAnimator ob = ObjectAnimator.ofFloat(tv_message, "translationY", 0, tv_message.getHeight()).setDuration(500);
+                    ob.addListener(new Animator.AnimatorListener() {
+                        @Override
+                        public void onAnimationStart(Animator animation) {
 
-                    Tools.showToast(msgTxt, context);
+                        }
+
+                        @Override
+                        public void onAnimationEnd(Animator animation) {
+                            SystemClock.sleep(2000);
+                            ObjectAnimator.ofFloat(tv_message, "translationY", tv_message.getHeight(), 0).setDuration(500).start();
+                        }
+
+                        @Override
+                        public void onAnimationCancel(Animator animation) {
+
+                        }
+
+                        @Override
+                        public void onAnimationRepeat(Animator animation) {
+
+                        }
+                    });
+                    ob.start();
 
                 }
             }
@@ -726,8 +454,16 @@ public class ChatActy extends BaseActivity implements VoiceRecordCompleteCallbac
                 sendMessage(Body_type.txt, "");
                 break;
             case R.id.btn_send_pic:
-                include_voice_view.setVisibility(View.GONE);
-                include_more.setVisibility(include_more.getVisibility() == View.VISIBLE ? View.GONE : View.VISIBLE);
+//                Intent intent = new Intent(this, ImageGridActivity.class);
+//                startActivityForResult(intent, IMAGE_PICKER);
+
+                Bundle bundle = new Bundle();
+                bundle.putString("fromUser", Constant.Login_Name);
+                bundle.putString("toUser", Constant.chatToUser);
+                bundle.putInt("type", 0);
+
+                openActivity(VideoChatActivity.class, bundle);
+
                 break;
         }
 
@@ -750,153 +486,38 @@ public class ChatActy extends BaseActivity implements VoiceRecordCompleteCallbac
 
                 for (final ImageItem im : images) {
 
+                    baseDialog.show();
+                    baseReqMap.clear();
 
-                    try {
-                        JSONObject obj = new JSONObject();
+                    Map<String, String> map = new HashMap<>();
+                    baseReqMap.put("image", im.path);
+                    map.put("file_submit", JSON.toJSONString(baseReqMap));
+                    map.put("auth_token", SPUtils.getInstance().getString("auth_token"));
+                    //获取当前在线用户的人
+                    NetTool.requestWithPost(context, Constant.Upload_Files, map, new IDataCallBack<String>() {
 
-                        obj.put("from_user", Constant.Login_Name);
-                        obj.put("to_user", toUser);
-                        obj.put("chat_type", "chat");
+                        @Override
+                        public void closeDialog() {
+                            baseDialog.dismiss();
+                        }
 
-                        JSONObject bodiesObj = new JSONObject();
-                        bodiesObj.put("type", "img");
-                        byte[] fileByte = File2byte(im.path);
-                        bodiesObj.put("fileData", fileByte);
-                        bodiesObj.put("fileName", im.name);
+                        @Override
+                        public void success(String result) {
+                            com.alibaba.fastjson.JSONObject obj = JSON.parseObject(result);
 
-                        obj.put("bodies", bodiesObj);
-
-                        socket.emit("chat", obj, new Ack() {
-
-                            @Override
-                            public void call(Object... args) {
-
-                                try {
-                                    baseDialog.dismiss();
-                                    if (args.length > 1) {      //给 服务器发回调 客户端收到消息了
-                                        Ack ack = (Ack) args[args.length - 1];
-                                        ack.call();
-                                    }
-
-                                    JSONObject obj = (JSONObject) args[0];
-                                    String bod = obj.getString("bodies");
-                                    Bodies bodies = JSON.parseObject(bod, Bodies.class);
-                                    obj.remove("bodies");
-
-                                    VFMessage msg = JSON.parseObject(obj.toString(), VFMessage.class);
-                                    msg.setBodies(bodies);
-
-                                    listData.add(msg);
-                                    messageDao.saveMessage(msg);
-                                    conversationDao.saveOrUpdateConversation(msg);
-
-                                    UiUtils.runOnUiThread(new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            try {
-                                                adapter.notifyDataSetChanged();
-                                                lv_list.setSelection(listData.size() - 1);
-                                            } catch (Exception e) {
-                                            }
-                                        }
-                                    });
-
-                                } catch (Exception e) {
-                                    e.printStackTrace();
-                                }
-
+                            if (obj.getIntValue("code") > 0) { //上传成功
+                                MyLog.i("imageurl", obj.getString("data"));
+                                sendMessage(Body_type.img, obj.getString("data"));
                             }
-                        });
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                    }
 
+                        }
 
-//                    Map<String, String> map = new HashMap<>();
-//                    baseReqMap.put("image", im.path);
-//                    map.put("file_submit", JSON.toJSONString(baseReqMap));
-//                    map.put("auth_token", SPUtils.getInstance().getString("auth_token"));
-//                    //获取当前在线用户的人
-//                    NetTool.requestWithPost(context, Constant.Upload_Files, map, new IDataCallBack<String>() {
-//
-//                        @Override
-//                        public void closeDialog() {
-//                            baseDialog.dismiss();
-//                        }
-//
-//                        @Override
-//                        public void success(String result) {
-//                            com.alibaba.fastjson.JSONObject obj = JSON.parseObject(result);
-//
-//                            if (obj.getIntValue("code") > 0) { //上传成功
-//                                MyLog.i("imageurl", obj.getString("data"));
-//                                sendMessage(Body_type.img, obj.getString("data"));
-//                            }
-//
-//                        }
-//
-//                        @Override
-//                        public void error(VFCode e) {
-//                            MyLog.i(Tag, "err --" + e);
-//                        }
-//                    });
+                        @Override
+                        public void error(VFCode e) {
+                            MyLog.i(Tag, "err --" + e);
+                        }
+                    });
 
-                }
-            }
-        }
-    }
-
-
-    public static byte[] File2byte(String filePath) {
-        byte[] buffer = null;
-        try {
-            File file = new File(filePath);
-            FileInputStream fis = new FileInputStream(file);
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            byte[] b = new byte[1024];
-            int n;
-            while ((n = fis.read(b)) != -1) {
-                bos.write(b, 0, n);
-            }
-            fis.close();
-            bos.close();
-            buffer = bos.toByteArray();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return buffer;
-    }
-
-    public static void byte2File(byte[] buf, String filePath, String fileName) {
-        BufferedOutputStream bos = null;
-        FileOutputStream fos = null;
-        File file = null;
-        try {
-            File dir = new File(filePath);
-            if (!dir.exists() && dir.isDirectory()) {
-                dir.mkdirs();
-            }
-            file = new File(filePath + File.separator + fileName);
-            fos = new FileOutputStream(file);
-            bos = new BufferedOutputStream(fos);
-            bos.write(buf);
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            if (bos != null) {
-                try {
-                    bos.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-            if (fos != null) {
-                try {
-                    fos.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
                 }
             }
         }
@@ -906,6 +527,7 @@ public class ChatActy extends BaseActivity implements VoiceRecordCompleteCallbac
     @Override
     protected void onResume() {
         super.onResume();
+        socket.open();
     }
 
 }
