@@ -1,30 +1,30 @@
 package com.centersoft.chat;
 
-import android.app.Activity;
-import android.content.Intent;
 import android.graphics.Point;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
-import android.view.Window;
-import android.view.WindowManager;
 import android.widget.Toast;
 
-import com.centersoft.util.PeerConnectionParameters;
-import com.centersoft.util.WebRtcClient;
+import com.centersoft.base.BaseActivity;
+import com.centersoft.webrtcclient.PeerConnectionParameters;
+import com.centersoft.webrtcclient.WebRtcClient;
 
-import org.json.JSONException;
 import org.webrtc.MediaStream;
 import org.webrtc.VideoRenderer;
 import org.webrtc.VideoRendererGui;
 
-import java.util.List;
+import butterknife.BindView;
 
-/**
- * Created by fengli on 2018/3/2.
- */
+//聊天界面
+public class VideoActy extends BaseActivity implements WebRtcClient.RtcListener {
 
-public class RtcActy extends Activity implements WebRtcClient.RtcListener {
-    private final static int VIDEO_CALL_SENT = 666;
+
+    @Override
+    public int initResource() {
+        return R.layout.acty_vedio;
+    }
+
+
     private static final String VIDEO_CODEC_VP9 = "VP9";
     private static final String AUDIO_CODEC_OPUS = "opus";
     // Local preview screen position before call is connected.
@@ -43,35 +43,28 @@ public class RtcActy extends Activity implements WebRtcClient.RtcListener {
     private static final int REMOTE_WIDTH = 100;
     private static final int REMOTE_HEIGHT = 100;
     private VideoRendererGui.ScalingType scalingType = VideoRendererGui.ScalingType.SCALE_ASPECT_FILL;
-    private GLSurfaceView vsv;
+
+    @BindView(R.id.glview_call)
+    GLSurfaceView glview_call;
+
     private VideoRenderer.Callbacks localRender;
     private VideoRenderer.Callbacks remoteRender;
     private WebRtcClient client;
-    private String mSocketAddress;
-    private String callerId;
+
+
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        requestWindowFeature(Window.FEATURE_NO_TITLE);
-        getWindow().addFlags(
-                WindowManager.LayoutParams.FLAG_FULLSCREEN
-                        | WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
-                        | WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD
-                        | WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED
-                        | WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON);
-//        setContentView(R.layout.main);
-//        mSocketAddress = "http://" + getResources().getString(R.string.host);
-//        mSocketAddress += (":" + getResources().getString(R.string.port) + "/");
-//
-//        vsv = (GLSurfaceView) findViewById(R.id.glview_call);
-        vsv.setPreserveEGLContextOnPause(true);
-        vsv.setKeepScreenOn(true);
-        VideoRendererGui.setView(vsv, new Runnable() {
+    protected void initData() {
+
+
+        glview_call.setPreserveEGLContextOnPause(true);
+        glview_call.setKeepScreenOn(true);
+        VideoRendererGui.setView(glview_call, new Runnable() {
             @Override
             public void run() {
-                init();
+                initWebRtc();
             }
+
         });
 
         // local and remote render
@@ -82,29 +75,25 @@ public class RtcActy extends Activity implements WebRtcClient.RtcListener {
                 LOCAL_X_CONNECTING, LOCAL_Y_CONNECTING,
                 LOCAL_WIDTH_CONNECTING, LOCAL_HEIGHT_CONNECTING, scalingType, true);
 
-        final Intent intent = getIntent();
-        final String action = intent.getAction();
-
-        if (Intent.ACTION_VIEW.equals(action)) {
-            final List<String> segments = intent.getData().getPathSegments();
-            callerId = segments.get(0);
-        }
     }
 
-    private void init() {
+
+    private void initWebRtc() {
         Point displaySize = new Point();
         getWindowManager().getDefaultDisplay().getSize(displaySize);
         PeerConnectionParameters params = new PeerConnectionParameters(
                 true, false, displaySize.x, displaySize.y, 30, 1, VIDEO_CODEC_VP9, true, 1, AUDIO_CODEC_OPUS, true);
 
-        client = new WebRtcClient(this, mSocketAddress, params, VideoRendererGui.getEGLContext());
+        Bundle bl = getIntent().getExtras();
+        client = new WebRtcClient(this, bl,params, VideoRendererGui.getEGLContext());
     }
+
 
     @Override
     public void onPause() {
         super.onPause();
-        vsv.onPause();
-        if(client != null) {
+        glview_call.onPause();
+        if (client != null) {
             client.onPause();
         }
     }
@@ -112,55 +101,23 @@ public class RtcActy extends Activity implements WebRtcClient.RtcListener {
     @Override
     public void onResume() {
         super.onResume();
-        vsv.onResume();
-        if(client != null) {
+        glview_call.onResume();
+        if (client != null) {
             client.onResume();
         }
     }
 
     @Override
     public void onDestroy() {
-        if(client != null) {
+        if (client != null) {
             client.onDestroy();
         }
         super.onDestroy();
     }
 
     @Override
-    public void onCallReady(String callId) {
-        if (callerId != null) {
-            try {
-                answer(callerId);
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-        } else {
-            call(callId);
-        }
-    }
-
-    public void answer(String callerId) throws JSONException {
-        client.sendMessage(callerId, "init", null);
-        startCam();
-    }
-
-    public void call(String callId) {
-        Intent msg = new Intent(Intent.ACTION_SEND);
-        msg.putExtra(Intent.EXTRA_TEXT, mSocketAddress + callId);
-        msg.setType("text/plain");
-        startActivityForResult(Intent.createChooser(msg, "Call someone :"), VIDEO_CALL_SENT);
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == VIDEO_CALL_SENT) {
-            startCam();
-        }
-    }
-
-    public void startCam() {
-        // Camera settings
-        client.start("android_test");
+    public void onCallReady(final String callId) {
+        client.start();
     }
 
     @Override
@@ -201,4 +158,5 @@ public class RtcActy extends Activity implements WebRtcClient.RtcListener {
 //                LOCAL_WIDTH_CONNECTING, LOCAL_HEIGHT_CONNECTING,
 //                scalingType);
     }
+
 }

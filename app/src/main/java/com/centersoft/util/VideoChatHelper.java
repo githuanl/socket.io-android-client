@@ -59,7 +59,7 @@ public class VideoChatHelper {
 
     private LinkedList<PeerConnection.IceServer> ICEServers;
 
-    public VideoChatHelper(Context mContext, Socket socket,EGLContext mEGLContext, VideoChatCallBack callBack) {
+    public VideoChatHelper(Context mContext, Socket socket, EGLContext mEGLContext, VideoChatCallBack callBack) {
         this.mContext = mContext;
         this.callBack = callBack;
         this.mEGLContext = mEGLContext;
@@ -349,7 +349,7 @@ public class VideoChatHelper {
      */
     public void exitRoom() {
 
-        for (Map.Entry<String, Peer> entry : peers.entrySet()){
+        for (Map.Entry<String, Peer> entry : peers.entrySet()) {
 
             closePeerConnection(entry.getKey());
         }
@@ -362,7 +362,6 @@ public class VideoChatHelper {
     }
 
 
-
     /**
      * 关闭peerConnection
      *
@@ -372,15 +371,24 @@ public class VideoChatHelper {
 
 
         Peer peer = peers.get(connectionId);
-        PeerConnection connection = peer.pc;
-        if (connection != null) {
-            connection.dispose();
-        }
-        peers.remove(connectionId);
-        factory.dispose();
 
+        if (peer != null) {
+            PeerConnection connection = peer.pc;
+            if (connection != null) {
+                connection.dispose();
+            }
+            peers.remove(connectionId);
+        } else {
+            for (Peer pe : peers.values()) {
+                pe.pc.dispose();
+            }
+        }
+
+        //必须断开连接 再断开音视频
         videoSource.dispose();
         audioSource.dispose();
+
+        factory.dispose();
 
         callBack.onCloseWithUserId(connectionId);
 
@@ -388,6 +396,7 @@ public class VideoChatHelper {
 
     VideoSource videoSource;
     AudioSource audioSource;
+
     /*
     * 创建本地流，并将流回调
     * */
@@ -395,11 +404,11 @@ public class VideoChatHelper {
         localMediaStream = factory.createLocalMediaStream("ARDAMS");
 
         // 音频
-        audioSource= factory.createAudioSource(new MediaConstraints());
+        audioSource = factory.createAudioSource(new MediaConstraints());
         localMediaStream.addTrack(factory.createAudioTrack("ARDAMSa0", audioSource));
 
         // 视频
-        String frontCameraDeviceName = VideoCapturerAndroid.getNameOfFrontFacingDevice();
+        String frontCameraDeviceName = VideoCapturerAndroid.getNameOfBackFacingDevice();
         VideoCapturer capture = VideoCapturerAndroid.create(frontCameraDeviceName);
         videoSource = factory.createVideoSource(capture, localVideoConstraints());
         localMediaStream.addTrack(factory.createVideoTrack("ARDAMSv0", videoSource));
@@ -502,8 +511,6 @@ public class VideoChatHelper {
     }
 
 
-
-
     private MediaConstraints peerConnectionConstraints() {
 
         MediaConstraints constraints = new MediaConstraints();
@@ -530,9 +537,9 @@ public class VideoChatHelper {
     private String getKeyFromConnectionDic(PeerConnection peerConnection) {
 
         String socketId = null;
-        for (Map.Entry<String, Peer>entry : peers.entrySet()) {
+        for (Map.Entry<String, Peer> entry : peers.entrySet()) {
 
-            if (peerConnection.equals(entry.getValue().pc)){
+            if (peerConnection.equals(entry.getValue().pc)) {
 
                 socketId = entry.getKey();
             }
@@ -544,9 +551,7 @@ public class VideoChatHelper {
     }
 
 
-
-
-    private class Peer implements SdpObserver, PeerConnection.Observer{
+    private class Peer implements SdpObserver, PeerConnection.Observer {
 
         private PeerConnection pc;
         private String id;
@@ -623,7 +628,7 @@ public class VideoChatHelper {
             JSONObject offer = new JSONObject();
             JSONObject sdp = new JSONObject();
             String type = sessionDescription.type.canonicalForm();
-            MyLog.i("-------onCreateSuccess"+type);
+            MyLog.i("-------onCreateSuccess" + type);
             MyLog.i("查看type是否正确：" + type);
             try {
                 sdp.put("type", type);

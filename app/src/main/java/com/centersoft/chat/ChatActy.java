@@ -1,71 +1,87 @@
 package com.centersoft.chat;
 
 import android.content.Intent;
+import android.media.AudioManager;
+import android.media.MediaPlayer;
 import android.os.Bundle;
-import android.os.SystemClock;
+import android.os.Environment;
 import android.support.v4.widget.SwipeRefreshLayout;
+import android.text.Editable;
 import android.text.TextUtils;
+import android.text.TextWatcher;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
+import android.widget.AdapterView;
 import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.GridView;
+import android.widget.ImageButton;
 import android.widget.ImageView;
-import android.widget.ListView;
+import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.alibaba.fastjson.JSON;
+import com.blankj.utilcode.util.FileUtils;
 import com.blankj.utilcode.util.KeyboardUtils;
-import com.blankj.utilcode.util.SPUtils;
 import com.bumptech.glide.Glide;
-import com.centersoft.ICallBack.IDataCallBack;
+import com.centersoft.ICallBack.VoiceRecordCompleteCallback;
 import com.centersoft.base.BaseActivity;
 import com.centersoft.base.ChatApplication;
 import com.centersoft.db.dao.ConversationDao;
 import com.centersoft.db.dao.VFMessageDao;
+import com.centersoft.effect.VFListView;
 import com.centersoft.effect.VFSwipeRefreshLayout;
 import com.centersoft.entity.Bodies;
 import com.centersoft.entity.EventBusType;
 import com.centersoft.entity.User;
 import com.centersoft.entity.VFMessage;
 import com.centersoft.enums.Body_type;
-import com.centersoft.enums.VFCode;
 import com.centersoft.util.Constant;
 import com.centersoft.util.EBConstant;
 import com.centersoft.util.GlideImageLoader;
 import com.centersoft.util.KeyboardStatusDetector;
-import com.centersoft.util.MyLog;
-import com.centersoft.util.NetTool;
 import com.centersoft.util.Tools;
 import com.centersoft.util.UiUtils;
 import com.lzy.imagepicker.ImagePicker;
 import com.lzy.imagepicker.bean.ImageItem;
+import com.lzy.imagepicker.ui.ImageGridActivity;
 import com.lzy.imagepicker.view.CropImageView;
-import com.nineoldandroids.animation.Animator;
-import com.nineoldandroids.animation.ObjectAnimator;
+import com.zhy.adapter.abslistview.CommonAdapter;
 import com.zhy.adapter.abslistview.MultiItemTypeAdapter;
 import com.zhy.adapter.abslistview.ViewHolder;
 import com.zhy.adapter.abslistview.base.ItemViewDelegate;
+import com.zhy.http.okhttp.OkHttpUtils;
+import com.zhy.http.okhttp.callback.FileCallBack;
 
 import org.greenrobot.eventbus.EventBus;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.BufferedOutputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import butterknife.BindView;
 import butterknife.OnClick;
 import io.socket.client.Ack;
 import io.socket.client.Socket;
+import okhttp3.Call;
 
 import static com.centersoft.util.Constant.chatToUser;
 
 //聊天界面
-public class ChatActy extends BaseActivity {
+public class ChatActy extends BaseActivity implements VoiceRecordCompleteCallback {
 
     private static final int IMAGE_PICKER = 2;
 
@@ -73,7 +89,7 @@ public class ChatActy extends BaseActivity {
     protected VFSwipeRefreshLayout refreshLayout;
 
     @BindView(R.id.lv_list)
-    protected ListView lv_list;
+    protected VFListView lv_list;
 
     protected List<VFMessage> listData = new ArrayList();
 
@@ -89,6 +105,58 @@ public class ChatActy extends BaseActivity {
 
     Socket socket;
 
+    @BindView(R.id.gridView)
+    GridView gridView;
+
+    @BindView(R.id.send_button)
+    Button send_button;
+
+    @BindView(R.id.btn_send_pic)
+    ImageButton btn_send_pic;
+
+    @BindView(R.id.include_more)
+    View include_more;
+
+    @BindView(R.id.include_voice_view)
+    View include_voice_view;
+
+    @BindView(R.id.popVoice)
+    CheckBox popVoice;
+
+    static enum KeyboardAdd {
+
+        photo("相册", R.drawable.keyboard_add_photo, ImageGridActivity.class),
+
+        camera("拍照", R.drawable.keyboard_add_camera, CameraActy.class),
+
+        location("位置", R.drawable.keyboard_add_location, LocationActy.class),
+
+        video("视频", R.drawable.keyboard_add_video, VideoChatActy.class);
+
+        private int res;
+        private String name;
+        private Class jumpActy;
+
+        private KeyboardAdd(String name, int res, Class jumpActy) {
+            this.name = name;
+            this.res = res;
+            this.jumpActy = jumpActy;
+        }
+
+        public int getDwRes() {
+            return res;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public Class getJumpActy() {
+            return jumpActy;
+        }
+
+
+    }
 
     @Override
     public int initResource() {
@@ -106,17 +174,80 @@ public class ChatActy extends BaseActivity {
         actionBar = getSupportActionBar();
     }
 
-    @BindView(R.id.tv_message)
-    TextView tv_message;    //新消息
-
-    @BindView(R.id.send_button)
-    Button send_button;
 
     String toUser = "";
     User user;
 
     VFMessageDao messageDao;
     ConversationDao conversationDao;
+
+    //发送语音
+    @Override
+    public void recordFinished(long duration, String voicePath) {
+
+
+        try {
+            JSONObject obj = new JSONObject();
+
+            obj.put("from_user", Constant.Login_Name);
+            obj.put("to_user", toUser);
+            obj.put("chat_type", "chat");
+
+            JSONObject bodiesObj = new JSONObject();
+            bodiesObj.put("type", "audio");
+            bodiesObj.put("duration", duration / 1000);
+            byte[] fileByte = File2byte(voicePath);
+            bodiesObj.put("fileData", fileByte);
+            bodiesObj.put("fileName", voicePath.replace(Environment.getExternalStorageDirectory().getPath() + "/luanliao/", ""));
+            obj.put("bodies", bodiesObj);
+
+            socket.emit("chat", obj, new Ack() {
+
+                @Override
+                public void call(Object... args) {
+
+                    try {
+                        if (args.length > 1) {      //给 服务器发回调 客户端收到消息了
+                            Ack ack = (Ack) args[args.length - 1];
+                            ack.call();
+                        }
+
+                        JSONObject obj = (JSONObject) args[0];
+                        String bod = obj.getString("bodies");
+                        Bodies bodies = JSON.parseObject(bod, Bodies.class);
+                        obj.remove("bodies");
+
+                        VFMessage msg = JSON.parseObject(obj.toString(), VFMessage.class);
+                        msg.setBodies(bodies);
+
+                        listData.add(msg);
+                        messageDao.saveMessage(msg);
+                        conversationDao.saveOrUpdateConversation(msg);
+
+                        UiUtils.runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                try {
+                                    adapter.notifyDataSetChanged();
+                                    lv_list.setSelection(listData.size() - 1);
+                                } catch (Exception e) {
+                                }
+                            }
+                        });
+
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+
+                }
+            });
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    private MediaPlayer mMyMediaPlayer;
 
     @Override
     protected void initData() {
@@ -168,6 +299,62 @@ public class ChatActy extends BaseActivity {
             }
         });
 
+
+        lv_list.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+
+                VFMessage vfMessage = listData.get(position);
+                switch (vfMessage.getBodies().getType()) {
+                    case audio:
+                        final String path = vfMessage.getBodies().getFileRemotePath().replace("audios/", "");
+                        final String sdPath = Environment.getExternalStorageDirectory().getPath() + "/luanliao/";
+
+                        if (mMyMediaPlayer == null) {
+                            mMyMediaPlayer = new MediaPlayer();
+                        } else {
+                            mMyMediaPlayer.reset();
+                        }
+
+                        if (FileUtils.isFileExists(sdPath + path)) {        //文件已经下载
+                            try {
+                                mMyMediaPlayer.setDataSource(sdPath + path);
+                                mMyMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+                                mMyMediaPlayer.prepare();
+                                mMyMediaPlayer.start();
+                            } catch (IOException e) {
+                            }
+                        } else {                                            //去下载
+                            OkHttpUtils//
+                                    .get()//
+                                    .tag(context)
+                                    .url(Constant.BaseUrl + "/" + vfMessage.getBodies().getFileRemotePath())//
+                                    .build()//
+                                    .execute(new FileCallBack(sdPath, path) {
+                                        @Override
+                                        public void onError(Call call, Exception e, int id) {
+
+                                        }
+
+                                        @Override
+                                        public void onResponse(File response, int id) {
+                                            try {
+                                                mMyMediaPlayer.setDataSource(sdPath + path);
+                                                mMyMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+                                                mMyMediaPlayer.prepare();
+                                                mMyMediaPlayer.start();
+                                            } catch (IOException e) {
+                                            }
+                                        }
+                                    });
+                        }
+
+                        break;
+                }
+            }
+        });
+
+
         View rootView = getWindow().getDecorView().findViewById(android.R.id.content);
 
         new KeyboardStatusDetector()
@@ -177,20 +364,54 @@ public class ChatActy extends BaseActivity {
                     public void onVisibilityChanged(boolean keyboardVisible) {
                         if (keyboardVisible) {
                             lv_list.setSelection(listData.size() - 1 > 0 ? listData.size() - 1 : 0);
+                        } else {
+                            include_more.setVisibility(View.GONE);
                         }
                     }
                 });
+
+        messageInput.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (!TextUtils.isEmpty(s)) {
+                    btn_send_pic.setVisibility(View.GONE);
+                    send_button.setVisibility(View.VISIBLE);
+                } else {
+                    btn_send_pic.setVisibility(View.VISIBLE);
+                    send_button.setVisibility(View.GONE);
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+
+            }
+        });
 
         messageInput.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
                 if (actionId == EditorInfo.IME_ACTION_SEND) {
-                    sendMessage(Body_type.txt, "");
+                    sendMessage(Body_type.txt);
                     return true;
                 }
                 return false;
             }
         });
+
+        popVoice.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                include_more.setVisibility(View.GONE);
+                include_voice_view.setVisibility(include_voice_view.getVisibility() == View.GONE ? View.VISIBLE : View.GONE);
+            }
+        });
+
 
         //将其设置未读数为0
         conversationDao.updateConversationUnReadNum(Constant.Login_Name, toUser);
@@ -235,7 +456,52 @@ public class ChatActy extends BaseActivity {
             }
         });
 
+        final List<KeyboardAdd> gridData = new ArrayList<>();
+        for (KeyboardAdd keyboardAdd : KeyboardAdd.values()) {
+            gridData.add(keyboardAdd);
+        }
 
+        CommonAdapter grideAdapter = new CommonAdapter<KeyboardAdd>(context, R.layout.acty_chat_grid_item, gridData) {
+            @Override
+            protected void convert(ViewHolder vh, KeyboardAdd op, int position) {
+                Glide.with(context)
+                        .load(op.getDwRes())
+                        .into((ImageView) vh.getView(R.id.iv_image));
+                vh.setText(R.id.tv_name, op.getName());
+            }
+        };
+
+        gridView.setAdapter(grideAdapter);
+        grideAdapter.notifyDataSetChanged();
+
+        gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                KeyboardAdd keyboardAdd = gridData.get(position);
+
+                switch (keyboardAdd) {
+                    case camera:         //拍照
+                        Intent intent = new Intent(context, keyboardAdd.getJumpActy());
+                        startActivityForResult(intent, 1001);
+                        break;
+                    case photo:         //图片
+                        Intent intent1 = new Intent(context, keyboardAdd.getJumpActy());
+                        startActivityForResult(intent1, IMAGE_PICKER);
+                        break;
+                    case video:          //视频
+                        Bundle bundle = new Bundle();
+                        bundle.putString("fromUser", Constant.Login_Name);
+                        bundle.putString("toUser", Constant.chatToUser);
+                        bundle.putInt("type", 0);
+                        openActivity(keyboardAdd.getJumpActy(), bundle);
+                        break;
+                    case location:      //位置
+                        Intent intent2 = new Intent(context, keyboardAdd.getJumpActy());
+                        startActivityForResult(intent2, 1000);
+                        break;
+                }
+            }
+        });
     }
 
 
@@ -257,19 +523,65 @@ public class ChatActy extends BaseActivity {
 
         @Override
         public void convert(ViewHolder holder, VFMessage vfMessage, int position) {
-            if (vfMessage.getBodies().getType() == Body_type.img) {
-                holder.getView(R.id.iv_image).setVisibility(View.VISIBLE);
-                holder.getView(R.id.tv_text).setVisibility(View.GONE);
-                String imageUrl = Constant.BaseUrl + "/" + vfMessage.getBodies().getImgUrl();
-                Glide.with(context)
-                        .load(imageUrl)
-                        .into((ImageView) holder.getView(R.id.iv_image));
+
+            RelativeLayout rl_audio = holder.getView(R.id.rl_audio);
+            TextView tv_text = holder.getView(R.id.tv_text);
+            LinearLayout ll_image = holder.getView(R.id.ll_image);
+
+            holder.setText(R.id.tv_name, vfMessage.getFrom_user());
+
+            Body_type type = vfMessage.getBodies().getType();
+
+            if (type == Body_type.loc) {
+                holder.getView(R.id.ll_locAddress).setVisibility(View.VISIBLE);
             } else {
-                holder.getView(R.id.iv_image).setVisibility(View.GONE);
-                holder.getView(R.id.tv_text).setVisibility(View.VISIBLE);
-                holder.setText(R.id.tv_name, vfMessage.getFrom_user())
-                        .setText(R.id.tv_text, vfMessage.getBodies().getMsg());
+                holder.getView(R.id.ll_locAddress).setVisibility(View.GONE);
             }
+
+            switch (type) {
+                case img:
+                    ll_image.setVisibility(View.VISIBLE);
+                    tv_text.setVisibility(View.GONE);
+                    rl_audio.setVisibility(View.GONE);
+
+                    String imageUrl = Constant.BaseUrl + "/" + vfMessage.getBodies().getFileRemotePath();
+                    Glide.with(context)
+                            .load(imageUrl)
+                            .into((ImageView) holder.getView(R.id.iv_image));
+
+                    break;
+                case audio:
+                    rl_audio.setVisibility(View.VISIBLE);
+                    tv_text.setVisibility(View.GONE);
+                    ll_image.setVisibility(View.GONE);
+                    holder.setText(R.id.duration, vfMessage.getBodies().getDuration() + "''");
+                    break;
+                case txt:
+                    tv_text.setVisibility(View.VISIBLE);
+                    ll_image.setVisibility(View.GONE);
+                    rl_audio.setVisibility(View.GONE);
+                    tv_text.setText(vfMessage.getBodies().getMsg());
+                    break;
+                case loc:
+                    TextView tv_title = holder.getView(R.id.tv_title);
+                    TextView tv_title_details = holder.getView(R.id.tv_title_details);
+                    tv_title.setText(vfMessage.getBodies().getLocationName());
+                    tv_title_details.setText(vfMessage.getBodies().getDetailLocationName());
+
+                    ll_image.setVisibility(View.VISIBLE);
+                    tv_text.setVisibility(View.GONE);
+                    rl_audio.setVisibility(View.GONE);
+
+                    String locImageurl = Constant.BaseUrl + "/" + vfMessage.getBodies().getFileRemotePath();
+                    Glide.with(context)
+                            .load(locImageurl)
+                            .into((ImageView) holder.getView(R.id.iv_image));
+
+                    break;
+
+            }
+
+
         }
     }
 
@@ -291,25 +603,71 @@ public class ChatActy extends BaseActivity {
         @Override
         public void convert(ViewHolder holder, VFMessage vfMessage, int position) {
 
-            if (vfMessage.getBodies().getType() == Body_type.img) {
-                holder.getView(R.id.iv_image).setVisibility(View.VISIBLE);
-                holder.getView(R.id.tv_text).setVisibility(View.GONE);
-                String imageUrl = Constant.BaseUrl + "/" + vfMessage.getBodies().getImgUrl();
-                Glide.with(context)
-                        .load(imageUrl)
-                        .into((ImageView) holder.getView(R.id.iv_image));
+            RelativeLayout rl_audio = holder.getView(R.id.rl_audio);
+            TextView tv_text = holder.getView(R.id.tv_text);
+            LinearLayout ll_image = holder.getView(R.id.ll_image);
+
+            holder.setText(R.id.tv_name, vfMessage.getFrom_user());
+
+            Body_type type = vfMessage.getBodies().getType();
+
+            if (type == Body_type.loc) {
+                holder.getView(R.id.ll_locAddress).setVisibility(View.VISIBLE);
             } else {
-                holder.getView(R.id.iv_image).setVisibility(View.GONE);
-                holder.getView(R.id.tv_text).setVisibility(View.VISIBLE);
-                holder.setText(R.id.tv_name, vfMessage.getFrom_user())
-                        .setText(R.id.tv_text, vfMessage.getBodies().getMsg());
+                holder.getView(R.id.ll_locAddress).setVisibility(View.GONE);
             }
+
+
+            switch (type) {
+                case img:
+                    ll_image.setVisibility(View.VISIBLE);
+                    tv_text.setVisibility(View.GONE);
+                    rl_audio.setVisibility(View.GONE);
+
+                    String imageUrl = Constant.BaseUrl + "/" + vfMessage.getBodies().getFileRemotePath();
+                    Glide.with(context)
+                            .load(imageUrl)
+                            .into((ImageView) holder.getView(R.id.iv_image));
+
+                    break;
+                case audio:
+                    rl_audio.setVisibility(View.VISIBLE);
+                    tv_text.setVisibility(View.GONE);
+                    ll_image.setVisibility(View.GONE);
+                    holder.setText(R.id.duration, vfMessage.getBodies().getDuration() + "''");
+                    break;
+                case txt:
+                    tv_text.setVisibility(View.VISIBLE);
+                    ll_image.setVisibility(View.GONE);
+                    rl_audio.setVisibility(View.GONE);
+                    tv_text.setText(vfMessage.getBodies().getMsg());
+                    break;
+                case loc:
+
+                    TextView tv_title = holder.getView(R.id.tv_title);
+                    TextView tv_title_details = holder.getView(R.id.tv_title_details);
+                    tv_title.setText(vfMessage.getBodies().getLocationName());
+                    tv_title_details.setText(vfMessage.getBodies().getDetailLocationName());
+
+                    ll_image.setVisibility(View.VISIBLE);
+                    tv_text.setVisibility(View.GONE);
+                    rl_audio.setVisibility(View.GONE);
+
+                    String locImageurl = Constant.BaseUrl + "/" + vfMessage.getBodies().getFileRemotePath();
+                    Glide.with(context)
+                            .load(locImageurl)
+                            .into((ImageView) holder.getView(R.id.iv_image));
+                    break;
+
+            }
+
+
         }
 
     }
 
 
-    public void sendMessage(Body_type type, String imageUrl) {
+    public void sendMessage(Body_type type) {
         try {
 
             String text = messageInput.getText().toString();
@@ -325,14 +683,7 @@ public class ChatActy extends BaseActivity {
 
             JSONObject bodiesObj = new JSONObject();
             bodiesObj.put("type", type.toString());
-            switch (type) {
-                case txt:
-                    bodiesObj.put("msg", text);
-                    break;
-                case img:
-                    bodiesObj.put("imgUrl", imageUrl);
-                    break;
-            }
+            bodiesObj.put("msg", text);
 
             obj.put("bodies", bodiesObj);
             socket.emit("chat", obj, new Ack() {
@@ -399,40 +750,12 @@ public class ChatActy extends BaseActivity {
             } else {
                 if (!TextUtils.isEmpty(Constant.chatToUser)) {
                     String msgTxt = msg.getBodies().getType().equals(Body_type.txt) ? msg.getBodies().getMsg() : "[图片]";
-                    tv_message.setText(msg.getFrom_user() + ":" + msgTxt);
-                    ObjectAnimator ob = ObjectAnimator.ofFloat(tv_message, "translationY", 0, tv_message.getHeight()).setDuration(500);
-                    ob.addListener(new Animator.AnimatorListener() {
-                        @Override
-                        public void onAnimationStart(Animator animation) {
 
-                        }
-
-                        @Override
-                        public void onAnimationEnd(Animator animation) {
-                            SystemClock.sleep(2000);
-                            ObjectAnimator.ofFloat(tv_message, "translationY", tv_message.getHeight(), 0).setDuration(500).start();
-                        }
-
-                        @Override
-                        public void onAnimationCancel(Animator animation) {
-
-                        }
-
-                        @Override
-                        public void onAnimationRepeat(Animator animation) {
-
-                        }
-                    });
-                    ob.start();
+                    Tools.showToast(msgTxt, context);
 
                 }
             }
         }
-//        else if (data.getTag().equals(EBConstant.MESSAGEONLINE) || data.getTag().equals(EBConstant.MESSAGEOFFLINE)) {
-//            if (data.getE().toString().equals(toUser)) {
-//                toobarTitle.setText((data.getTag().equals(EBConstant.MESSAGEONLINE)) && data.getE().equals(toUser) ? toUser + "[在线]" : toUser + "[离线]");
-//            }
-//        }
     }
 
     @Override
@@ -451,19 +774,11 @@ public class ChatActy extends BaseActivity {
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.send_button:
-                sendMessage(Body_type.txt, "");
+                sendMessage(Body_type.txt);
                 break;
             case R.id.btn_send_pic:
-//                Intent intent = new Intent(this, ImageGridActivity.class);
-//                startActivityForResult(intent, IMAGE_PICKER);
-
-                Bundle bundle = new Bundle();
-                bundle.putString("fromUser", Constant.Login_Name);
-                bundle.putString("toUser", Constant.chatToUser);
-                bundle.putInt("type", 0);
-
-                openActivity(VideoChatActivity.class, bundle);
-
+                include_voice_view.setVisibility(View.GONE);
+                include_more.setVisibility(include_more.getVisibility() == View.VISIBLE ? View.GONE : View.VISIBLE);
                 break;
         }
 
@@ -477,47 +792,217 @@ public class ChatActy extends BaseActivity {
         return super.beforeBack();
     }
 
+
+    public void sendImage(final ImageItem im) {
+        try {
+            JSONObject obj = new JSONObject();
+
+            obj.put("from_user", Constant.Login_Name);
+            obj.put("to_user", toUser);
+            obj.put("chat_type", "chat");
+
+            JSONObject bodiesObj = new JSONObject();
+            bodiesObj.put("type", "img");
+            byte[] fileByte = File2byte(im.path);
+            bodiesObj.put("fileData", fileByte);
+            bodiesObj.put("fileName", im.name);
+
+            JSONObject sizeObj = new JSONObject();
+            sizeObj.put("width", im.width);
+            sizeObj.put("height", im.height);
+            bodiesObj.put("size", sizeObj);
+
+            obj.put("bodies", bodiesObj);
+
+            socket.emit("chat", obj, new Ack() {
+
+                @Override
+                public void call(Object... args) {
+
+                    try {
+                        baseDialog.dismiss();
+                        if (args.length > 1) {      //给 服务器发回调 客户端收到消息了
+                            Ack ack = (Ack) args[args.length - 1];
+                            ack.call();
+                        }
+
+                        JSONObject obj = (JSONObject) args[0];
+                        String bod = obj.getString("bodies");
+                        Bodies bodies = JSON.parseObject(bod, Bodies.class);
+                        obj.remove("bodies");
+
+                        VFMessage msg = JSON.parseObject(obj.toString(), VFMessage.class);
+                        msg.setBodies(bodies);
+
+                        listData.add(msg);
+                        messageDao.saveMessage(msg);
+                        conversationDao.saveOrUpdateConversation(msg);
+
+                        UiUtils.runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                adapter.notifyDataSetChanged();
+                                lv_list.setSelection(listData.size() - 1 > 0 ? listData.size() - 1 : 0);
+                            }
+                        });
+
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+
+                }
+            });
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
+    //发送地理位置
+    public void sendLocation(double lat, double lon, String location, String detail) {
+        try {
+            JSONObject obj = new JSONObject();
+
+            obj.put("from_user", Constant.Login_Name);
+            obj.put("to_user", toUser);
+            obj.put("chat_type", "chat");
+
+            JSONObject bodiesObj = new JSONObject();
+            bodiesObj.put("type", "loc");
+            bodiesObj.put("longitude", lon);
+            bodiesObj.put("latitude", lat);
+            bodiesObj.put("locationName", location);
+            bodiesObj.put("detailLocationName", detail);
+            obj.put("bodies", bodiesObj);
+
+
+            socket.emit("chat", obj, new Ack() {
+
+                @Override
+                public void call(Object... args) {
+
+                    try {
+                        baseDialog.dismiss();
+                        if (args.length > 1) {      //给 服务器发回调 客户端收到消息了
+                            Ack ack = (Ack) args[args.length - 1];
+                            ack.call();
+                        }
+
+                        JSONObject obj = (JSONObject) args[0];
+                        String bod = obj.getString("bodies");
+                        Bodies bodies = JSON.parseObject(bod, Bodies.class);
+                        obj.remove("bodies");
+
+                        VFMessage msg = JSON.parseObject(obj.toString(), VFMessage.class);
+                        msg.setBodies(bodies);
+
+                        listData.add(msg);
+                        messageDao.saveMessage(msg);
+                        conversationDao.saveOrUpdateConversation(msg);
+
+                        UiUtils.runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                adapter.notifyDataSetChanged();
+                                lv_list.setSelection(listData.size() - 1 > 0 ? listData.size() - 1 : 0);
+                            }
+                        });
+
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+
+                }
+            });
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (resultCode == ImagePicker.RESULT_CODE_ITEMS) {
-            if (data != null && requestCode == IMAGE_PICKER) {
+        if (data != null) {
+            if (resultCode == ImagePicker.RESULT_CODE_ITEMS && requestCode == IMAGE_PICKER) {
                 ArrayList<ImageItem> images = (ArrayList<ImageItem>) data.getSerializableExtra(ImagePicker.EXTRA_RESULT_ITEMS);
 
                 for (final ImageItem im : images) {
+                    sendImage(im);
+                }
 
-                    baseDialog.show();
-                    baseReqMap.clear();
+            } else if (resultCode == 101) {     // 地理位置
 
-                    Map<String, String> map = new HashMap<>();
-                    baseReqMap.put("image", im.path);
-                    map.put("file_submit", JSON.toJSONString(baseReqMap));
-                    map.put("auth_token", SPUtils.getInstance().getString("auth_token"));
-                    //获取当前在线用户的人
-                    NetTool.requestWithPost(context, Constant.Upload_Files, map, new IDataCallBack<String>() {
 
-                        @Override
-                        public void closeDialog() {
-                            baseDialog.dismiss();
-                        }
+                double lat = data.getDoubleExtra("lat", 0.0);
+                double lon = data.getDoubleExtra("lon", 0.0);
+                String location = data.getStringExtra("location");
+                String detail = data.getStringExtra("detailLocation");
 
-                        @Override
-                        public void success(String result) {
-                            com.alibaba.fastjson.JSONObject obj = JSON.parseObject(result);
+                sendLocation(lat, lon, location, detail);
 
-                            if (obj.getIntValue("code") > 0) { //上传成功
-                                MyLog.i("imageurl", obj.getString("data"));
-                                sendMessage(Body_type.img, obj.getString("data"));
-                            }
+            } else if (resultCode == 102) {     // 照片
 
-                        }
+                ImageItem im = new ImageItem();
+                im.name = data.getStringExtra("imageName");
+                im.width = data.getIntExtra("imageWidth", 0);
+                im.height = data.getIntExtra("imageHeight", 0);
+                im.path = data.getStringExtra("imagePath");
+                sendImage(im);
+            }
+        }
+    }
 
-                        @Override
-                        public void error(VFCode e) {
-                            MyLog.i(Tag, "err --" + e);
-                        }
-                    });
 
+    public static byte[] File2byte(String filePath) {
+        byte[] buffer = null;
+        try {
+            File file = new File(filePath);
+            FileInputStream fis = new FileInputStream(file);
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            byte[] b = new byte[1024];
+            int n;
+            while ((n = fis.read(b)) != -1) {
+                bos.write(b, 0, n);
+            }
+            fis.close();
+            bos.close();
+            buffer = bos.toByteArray();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return buffer;
+    }
+
+    public static void byte2File(byte[] buf, String filePath, String fileName) {
+        BufferedOutputStream bos = null;
+        FileOutputStream fos = null;
+        File file = null;
+        try {
+            File dir = new File(filePath);
+            if (!dir.exists() && dir.isDirectory()) {
+                dir.mkdirs();
+            }
+            file = new File(filePath + File.separator + fileName);
+            fos = new FileOutputStream(file);
+            bos = new BufferedOutputStream(fos);
+            bos.write(buf);
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (bos != null) {
+                try {
+                    bos.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            if (fos != null) {
+                try {
+                    fos.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
             }
         }
@@ -527,7 +1012,6 @@ public class ChatActy extends BaseActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        socket.open();
     }
 
 }

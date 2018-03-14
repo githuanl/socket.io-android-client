@@ -1,8 +1,4 @@
-package com.centersoft.util;
-
-/**
- * Created by liudong on 2018/3/12.
- */
+package com.centersoft.webrtcclient;
 
 public class PeerConnectionParameters {
     public final boolean videoCallEnabled;

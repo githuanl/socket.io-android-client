@@ -1,9 +1,11 @@
 package com.centersoft.chat;
 
+import android.Manifest;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.BitmapFactory;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
@@ -11,6 +13,7 @@ import android.media.RingtoneManager;
 import android.os.Bundle;
 import android.os.PowerManager;
 import android.support.design.widget.TabLayout;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.text.TextUtils;
 import android.view.KeyEvent;
@@ -85,6 +88,7 @@ public class HomeActy extends BaseActivity {
     @BindColor(R.color.colorPrimaryDark)
     int colorPrimaryDark;
 
+
     @Override
     public int initResource() {
         return R.layout.acty_home;
@@ -123,6 +127,7 @@ public class HomeActy extends BaseActivity {
         viewpager.setOffscreenPageLimit(listFragment.size());
         adapter.notifyDataSetChanged();
 
+
         initBottomTab();
 
         mTabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
@@ -152,6 +157,12 @@ public class HomeActy extends BaseActivity {
         initSocketData();
     }
 
+    public final  String[] requestedPermissions = {
+            Manifest.permission.READ_EXTERNAL_STORAGE,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE,
+            Manifest.permission.CAMERA
+    };
+
     boolean onScreenOff = false;
 
     ScreenListener l;
@@ -174,33 +185,10 @@ public class HomeActy extends BaseActivity {
                 .on(Socket.EVENT_CONNECT_TIMEOUT, onConnectTimeoutError)
                 .on("onLine", onLine)
                 .on("GroupChat", GroupChat)
+                .on("videoChat", onVideoChat)
                 .on("notification", notification)
                 .on("offLine", offLine);
 
-        // 视频通话请求
-        socket.on("videoChat", new Emitter.Listener() {
-            @Override
-            public void call(Object... args) {
-
-                JSONObject dataObject = (JSONObject) args[0];
-
-                try {
-                    String fromUser = dataObject.getString("from_user");
-                    String room = dataObject.getString("room");
-
-                    Bundle bundle = new Bundle();
-                    bundle.putString("fromUser", fromUser);
-                    bundle.putString("toUser", Constant.Login_Name);
-                    bundle.putString("room", room);
-                    bundle.putInt("type", 1);
-                    openActivity(VideoChatActivity.class, bundle);
-
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-
-            }
-        });
 
         socket.connect();
 
@@ -232,9 +220,63 @@ public class HomeActy extends BaseActivity {
             });
         }
 
+        checkPermissions();
 //        Intent intent = new Intent(this, VFChatService.class);
 //        startService(intent);
     }
+
+
+    private void checkPermissions() {
+
+        int REQUEST_EXTERNAL_STORAGE = 1;
+        String[] PERMISSIONS_STORAGE = {
+                Manifest.permission.READ_EXTERNAL_STORAGE,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                Manifest.permission.RECORD_AUDIO,
+                Manifest.permission.ACCESS_WIFI_STATE,
+                Manifest.permission.INTERNET,
+                Manifest.permission.ACCESS_NETWORK_STATE,
+                Manifest.permission.ACCESS_WIFI_STATE,
+                Manifest.permission.ACCESS_COARSE_LOCATION,
+                Manifest.permission.CHANGE_WIFI_STATE,
+                Manifest.permission.CAMERA,
+                Manifest.permission.READ_PHONE_STATE,
+                Manifest.permission.MODIFY_AUDIO_SETTINGS
+        };
+        int permission = ActivityCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        if (permission != PackageManager.PERMISSION_GRANTED) {
+            // We don't have permission so prompt the user
+            ActivityCompat.requestPermissions(
+                    this,
+                    PERMISSIONS_STORAGE,
+                    REQUEST_EXTERNAL_STORAGE
+            );
+        }
+    }
+
+    // 视频通话请求
+    private Emitter.Listener onVideoChat = new Emitter.Listener() {
+        @Override
+        public void call(Object... args) {
+            JSONObject dataObject = (JSONObject) args[0];
+
+            try {
+                String fromUser = dataObject.getString("from_user");
+                String room = dataObject.getString("room");
+
+                Bundle bundle = new Bundle();
+                bundle.putString("fromUser", fromUser);
+                bundle.putString("toUser", Constant.Login_Name);
+                bundle.putString("room", room);
+                bundle.putInt("type", 1);
+                openActivity(VideoChatActy.class, bundle);
+
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+        }
+    };
 
 
     //聊天
@@ -247,8 +289,10 @@ public class HomeActy extends BaseActivity {
                 ack.call(1);
 
                 JSONObject obj = (JSONObject) args[0];
-                String bod = obj.getString("bodies");
-                Bodies bodies = JSON.parseObject(bod, Bodies.class);
+                JSONObject bodis = obj.getJSONObject("bodies");
+//                Byte[] bodisByte = (Byte[]) bodis.get("fileData");
+                bodis.remove("fileData");
+                Bodies bodies = JSON.parseObject(bodis.toString(), Bodies.class);
                 obj.remove("bodies");
 
                 VFMessage msg = JSON.parseObject(obj.toString(), VFMessage.class);
@@ -538,11 +582,8 @@ public class HomeActy extends BaseActivity {
         socket.off("notification", notification);
         socket.off("GroupChat", GroupChat);
         socket.off("onLine", onLine);
+        socket.off("videoChat", onVideoChat);
         socket.off("offLine", offLine);
-        socket.off("videoChat");
-
-
-
         socket = null;
 
     }

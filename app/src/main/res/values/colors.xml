@@ -36,4 +36,14 @@
     <color name="home_tab_text">#707a83</color>
     <color name="home_bottom_tab_color">@color/SubTextcolor</color>
 
+    <color name="colorSecond">#787878</color>
+
+    <color name="colorSepLine">#dfdfdf</color>
+
+    <color name="colorMain">#dd2e2e2e</color>
+
+    <color name="colorBlue">#33ccff</color>
+
+    <color name="colorBlack">#ff232323</color>
+
 </resources>

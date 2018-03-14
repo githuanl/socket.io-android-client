@@ -26,11 +26,8 @@ import butterknife.OnClick;
 import io.socket.client.Ack;
 import io.socket.client.Socket;
 
-/**
- * Created by fengli on 2018/3/2.
- */
 
-public class VideoChatActivity extends BaseActivity {
+public class VideoChatActy extends BaseActivity {
 
     @Override
     protected int initResource() {
@@ -56,7 +53,7 @@ public class VideoChatActivity extends BaseActivity {
     Socket socket;
 
     @OnClick(R.id.video_chat_connect)
-    void connectClick(){
+    void connectClick() {
 
         isAnswer = true;
 
@@ -82,7 +79,7 @@ public class VideoChatActivity extends BaseActivity {
             JSONObject object = new JSONObject();
             try {
                 object.put("room", room);
-                ChatApplication.getSocket().emit("cancelVideoChat", object);
+                socket.emit("cancelVideoChat", object);
             } catch (JSONException e) {
                 e.printStackTrace();
             }
@@ -90,10 +87,8 @@ public class VideoChatActivity extends BaseActivity {
 
             videoChatHelper.exitRoom();
         }
-       goBack();
+        goBack();
     }
-
-
 
 
     private ChatVideoType videoType;
@@ -185,7 +180,7 @@ public class VideoChatActivity extends BaseActivity {
         }
 
 
-        videoChatHelper = new VideoChatHelper(context, socket,null, new VideoChatHelper.VideoChatCallBack() {
+        videoChatHelper = new VideoChatHelper(context, socket, null, new VideoChatHelper.VideoChatCallBack() {
 
             @Override
             public void onSetLocalStream(final MediaStream localStream, String userId) {
@@ -214,7 +209,6 @@ public class VideoChatActivity extends BaseActivity {
                 VideoTrack videoTrack = remoteStream.videoTracks.get(0);
                 videoTrack.addRenderer(renderer);
 
-
             }
         });
 
@@ -225,7 +219,6 @@ public class VideoChatActivity extends BaseActivity {
     * */
     private void requestServerCreateRoom() {
 
-        Socket socket = ChatApplication.getSocket();
         JSONObject jsonObject = new JSONObject();
         try {
             jsonObject.put("from_user", fromUser);

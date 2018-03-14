@@ -57,7 +57,7 @@ public class ChatApplication extends Application implements Application.Activity
             opts.reconnectionDelay = 2000;      //延迟
             opts.reconnectionDelayMax = 6000;
             opts.reconnectionAttempts = -1;
-            opts.timeout = 6000;
+            opts.timeout = 16000;
             opts.query = "auth_token=" + auth_Token;
             try {
                 socket = IO.socket(Constant.BaseUrl, opts);
