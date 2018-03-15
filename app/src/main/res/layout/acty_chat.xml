@@ -40,7 +40,7 @@
             android:layout_height="30dp"
             android:layout_gravity="center_vertical"
             android:layout_marginLeft="10dp"
-            android:layout_marginRight="8dp"
+            android:layout_marginRight="6dp"
             android:background="@drawable/checkbox_pop_voice"
             android:button="@null"
             android:visibility="visible" />
@@ -49,7 +49,6 @@
             android:layout_width="0dp"
             android:layout_height="50dp"
             android:layout_gravity="center_vertical"
-            android:layout_marginRight="2dp"
             android:layout_weight="1">
 
 
@@ -62,16 +61,15 @@
                 android:maxLines="2"
                 android:paddingLeft="10dp"
                 android:paddingRight="40dp"
-                android:singleLine="true"
-                android:textSize="14sp" />
+                android:textSize="15sp" />
 
             <CheckBox
                 android:id="@+id/popEmoji"
-                android:layout_width="28dp"
-                android:layout_height="28dp"
+                android:layout_width="38dp"
+                android:layout_height="38dp"
                 android:layout_alignParentRight="true"
                 android:layout_centerVertical="true"
-                android:layout_marginRight="8dp"
+                android:layout_marginRight="5dp"
                 android:background="@drawable/checkbox_pop_emoji_big"
                 android:button="@null"
                 android:visibility="visible" />
@@ -106,10 +104,14 @@
         </RelativeLayout>
     </LinearLayout>
 
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="0.6dp"
+        android:background="@color/dividing_line" />
+
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
-
 
         <include
             android:id="@+id/include_emoji"

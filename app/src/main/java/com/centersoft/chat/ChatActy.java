@@ -5,6 +5,7 @@ import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.Environment;
+import android.support.v4.view.ViewPager;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.text.Editable;
 import android.text.TextUtils;
@@ -41,12 +42,15 @@ import com.centersoft.entity.EventBusType;
 import com.centersoft.entity.User;
 import com.centersoft.entity.VFMessage;
 import com.centersoft.enums.Body_type;
+import com.centersoft.fragment.EmojiFragment;
 import com.centersoft.util.Constant;
 import com.centersoft.util.EBConstant;
+import com.centersoft.util.EmotionUtil;
 import com.centersoft.util.GlideImageLoader;
 import com.centersoft.util.KeyboardStatusDetector;
 import com.centersoft.util.Tools;
 import com.centersoft.util.UiUtils;
+import com.centersoft.util.ViewPageAdapter;
 import com.lzy.imagepicker.ImagePicker;
 import com.lzy.imagepicker.bean.ImageItem;
 import com.lzy.imagepicker.ui.ImageGridActivity;
@@ -120,8 +124,18 @@ public class ChatActy extends BaseActivity implements VoiceRecordCompleteCallbac
     @BindView(R.id.include_voice_view)
     View include_voice_view;
 
+
+    @BindView(R.id.include_emoji)
+    View include_emoji;
+
     @BindView(R.id.popVoice)
     CheckBox popVoice;
+
+    @BindView(R.id.popEmoji)
+    CheckBox popEmoji;
+
+    @BindView(R.id.viewpager)
+    ViewPager emjViewpager;
 
     static enum KeyboardAdd {
 
@@ -366,6 +380,10 @@ public class ChatActy extends BaseActivity implements VoiceRecordCompleteCallbac
                             lv_list.setSelection(listData.size() - 1 > 0 ? listData.size() - 1 : 0);
                         } else {
                             include_more.setVisibility(View.GONE);
+                            include_emoji.setVisibility(View.GONE);
+                            include_voice_view.setVisibility(View.GONE);
+                            popEmoji.setChecked(false);
+                            popVoice.setChecked(false);
                         }
                     }
                 });
@@ -408,7 +426,19 @@ public class ChatActy extends BaseActivity implements VoiceRecordCompleteCallbac
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 include_more.setVisibility(View.GONE);
+                include_emoji.setVisibility(View.GONE);
                 include_voice_view.setVisibility(include_voice_view.getVisibility() == View.GONE ? View.VISIBLE : View.GONE);
+                popEmoji.setChecked(false);
+            }
+        });
+
+        popEmoji.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                include_more.setVisibility(View.GONE);
+                include_voice_view.setVisibility(View.GONE);
+                include_emoji.setVisibility(include_emoji.getVisibility() == View.GONE ? View.VISIBLE : View.GONE);
+                popVoice.setChecked(false);
             }
         });
 
@@ -456,6 +486,7 @@ public class ChatActy extends BaseActivity implements VoiceRecordCompleteCallbac
             }
         });
 
+        //添加 + 号 面板
         final List<KeyboardAdd> gridData = new ArrayList<>();
         for (KeyboardAdd keyboardAdd : KeyboardAdd.values()) {
             gridData.add(keyboardAdd);
@@ -502,6 +533,57 @@ public class ChatActy extends BaseActivity implements VoiceRecordCompleteCallbac
                 }
             }
         });
+
+        List<android.support.v4.app.Fragment> fragments = new ArrayList<>();
+
+        List<String> emotionNames = new ArrayList<>();
+        for (String emotion : EmotionUtil.emotions) {
+            emotionNames.add(emotion);
+            if (emotionNames.size() == 21) {
+
+                EmojiFragment fragment = new EmojiFragment();
+                fragment.setClickListener(new EmojiFragment.EmojiClickListener() {
+                    @Override
+                    public void click(String text) {
+                        messageInput.setText(messageInput.getText().toString() + text);
+                        messageInput.setSelection(messageInput.getText().toString().length());
+                        btn_send_pic.setVisibility(View.GONE);
+                        send_button.setVisibility(View.VISIBLE);
+                    }
+                });
+                Bundle bl = new Bundle();
+                bl.putString("list", JSON.toJSONString(emotionNames));
+                fragment.setArguments(bl);
+                fragments.add(fragment);
+                emotionNames = new ArrayList<>();
+            }
+        }
+
+        if (emotionNames.size() > 0) {
+            EmojiFragment fragment = new EmojiFragment();
+            fragment.setClickListener(new EmojiFragment.EmojiClickListener() {
+                @Override
+                public void click(String text) {
+                    messageInput.setText(messageInput.getText().toString() + text);
+                    messageInput.setSelection(messageInput.getText().toString().length());
+                    btn_send_pic.setVisibility(View.GONE);
+                    send_button.setVisibility(View.VISIBLE);
+                }
+            });
+            Bundle bl = new Bundle();
+            bl.putString("list", JSON.toJSONString(emotionNames));
+            fragment.setArguments(bl);
+            fragments.add(fragment);
+        }
+
+        String[] mTitles = new String[]{"未完成", "已完成"};
+
+        ViewPageAdapter viewPageAdapter = new ViewPageAdapter(getSupportFragmentManager(), fragments, mTitles);
+
+        emjViewpager.setAdapter(viewPageAdapter);
+
+        viewPageAdapter.notifyDataSetChanged();
+
     }
 
 
@@ -661,7 +743,6 @@ public class ChatActy extends BaseActivity implements VoiceRecordCompleteCallbac
 
             }
 
-
         }
 
     }
@@ -750,9 +831,7 @@ public class ChatActy extends BaseActivity implements VoiceRecordCompleteCallbac
             } else {
                 if (!TextUtils.isEmpty(Constant.chatToUser)) {
                     String msgTxt = msg.getBodies().getType().equals(Body_type.txt) ? msg.getBodies().getMsg() : "[图片]";
-
                     Tools.showToast(msgTxt, context);
-
                 }
             }
         }
@@ -777,6 +856,8 @@ public class ChatActy extends BaseActivity implements VoiceRecordCompleteCallbac
                 sendMessage(Body_type.txt);
                 break;
             case R.id.btn_send_pic:
+                popEmoji.setChecked(false);
+                popVoice.setChecked(false);
                 include_voice_view.setVisibility(View.GONE);
                 include_more.setVisibility(include_more.getVisibility() == View.VISIBLE ? View.GONE : View.VISIBLE);
                 break;
